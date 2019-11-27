@@ -1,0 +1,29 @@
+# 2019.5.24
+# Project Tooru
+# Git Ignore
+
+# VScode plugin C/C++ generated cache files
+.vscode/ipch
+
+# Personal used dir
+_learn
+.todo
+
+# Deprecated source/config/test... files aka. HISTORY MUSEUM
+_lost
+
+# Outside, not OS provide C/C++ lib
+lib
+
+# Build generated cache/target files
+*.so
+*.dll
+build
+CMakeFiles
+config.h
+*.cmake
+*Cache*
+*.ninja
+
+# local lua
+lua*
