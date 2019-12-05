@@ -522,13 +522,15 @@ static int init_historys(lua_State *L) {
   hs->_cap = INIT_HS_LEN;
   long long *choice = (long long *)malloc(hs->sp * sizeof(long long));
   /* gen from choice */
+  luaL_argcheck(L, luaL_len(L, 2) == hs->sp, 1, "choice length is not equ with"
+                                                " simulation population");
   int good;
   for (long long i = 0; i < hs->sp; i++) {
     lua_geti(L, 2, i + 1);
     /* ...;-1=c; */
     choice[i] = lua_tointegerx(L, -1, &good) - 1;
     luaL_argcheck(L, good && choice[i] >= 0 && choice[i] < hs->an, 1,
-                  "invalid choice index");
+                  "invalid choice index, not a int");
     lua_pop(L, 1);
     /* ...; */
   }

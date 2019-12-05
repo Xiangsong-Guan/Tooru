@@ -54,7 +54,8 @@ static void *outcome_from_lua_whatever_mixed_or_not_new(lua_State *L,
           L, l == lan[i], 2,
           "player's mixed choice's length is not her local action amount");
       luaL_argcheck(L, lu_number_list_array(L, -1, 1, l, mixed_pro), 2,
-                    "player's mixed choice is invalid");
+                    "player's mixed choice is invalid, "
+                    "some value is not a number");
       lua_pop(L, 1);
       /* ...; */
       mixed_pro += l;
@@ -72,7 +73,7 @@ static void *outcome_from_lua_whatever_mixed_or_not_new(lua_State *L,
       /* ...;-1=c; */
       outcome[i] = lua_tointegerx(L, -1, &good) - 1;
       luaL_argcheck(L, good && outcome[i] >= 0 && outcome[i] < lan[i], 1,
-                    "invalid choice index");
+                    "invalid choice index, some value is not a int");
       lua_pop(L, 1);
       /* ...; */
     }
@@ -305,7 +306,7 @@ static long long *best_response_certain_fool_new(const struct Game_Info *G,
  *
  * Return the best response index (local actions index) array (need to be
  * free after use). And putthe array's length in <l>,
- * the best reponse's payoff in <best+payoff>.
+ * the best reponse's payoff in <best_payoff>.
  *
  *           <G> Game Info
  *       <mixed> All players' mixed, leave the target's choice meaningless. But
@@ -627,7 +628,7 @@ static int init_game_info_ex(lua_State *L) {
   pn = luaL_checkinteger(L, 1);
   luaL_checktype(L, 2, LUA_TTABLE);
   luaL_checktype(L, 3, LUA_TTABLE);
-  luaL_argcheck(L, pn > 0, 1, "invalid player amount");
+  luaL_argcheck(L, pn > 1, 1, "invalid player amount");
   luaL_argcheck(L, luaL_len(L, 2) == pn, 2,
                 "invalid local actions amount, its length should be equ to "
                 "players amount");
@@ -636,6 +637,8 @@ static int init_game_info_ex(lua_State *L) {
   lan = malloc(pn * sizeof(long long));
   luaL_argcheck(L, lu_integer_list_array(L, 2, 1, pn, lan), 2,
                 "invalid local actions amount");
+  for (long long i = 0; i < pn; i++)
+    luaL_argcheck(L, lan[i] > 0, 2, "local actions amount invalid");
   /* calc ary/hex & mixed_len count */
   ary_hex = (long long *)malloc(pn * sizeof(long long));
   ary_hex[0] = 1;
@@ -649,7 +652,7 @@ static int init_game_info_ex(lua_State *L) {
   /* now we can check pmtx, due to ary_hex calculated */
   tmp = luaL_len(L, 3);
   luaL_argcheck(L, tmp == ary_hex[pn - 1] * lan[pn - 1] * pn, 3,
-                "invalid payoff mtx, wrong pmtx len");
+                "payoff mtx's length is invalid with players' info");
   /* process pmtx */
   pmtx = (double *)malloc(tmp * sizeof(double));
   luaL_argcheck(L, lu_number_list_array(L, 3, 1, tmp, pmtx), 3,
