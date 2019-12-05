@@ -19,7 +19,7 @@
 
 /* here some export functions to Lua */
 TOORU_EXPORT int luaopen_libtooru_evosim(lua_State *L);
-/* TOORU_EXPORT int luaopen_libtooru_gs(lua_State *L); */
+TOORU_EXPORT int luaopen_lgt(lua_State *L);
 TOORU_EXPORT int luaopen_libtooru_others(lua_State *L);
 
 /* Game_Info contains some necessary infomation about a game needed by C */
