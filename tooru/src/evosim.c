@@ -536,7 +536,7 @@ static int init_historys(lua_State *L) {
 
   lua_pop(L, 1);
   /* 1=hs */
-  srand(time(NULL));
+  srand((unsigned int)time(NULL));
 
   /* gen chance */
   choice = hs->arr->choice;

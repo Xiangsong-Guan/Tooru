@@ -14,13 +14,8 @@
 #define TOORU_EXPORT
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "lua54/lauxlib.h"
 #include "lua54/lua.h"
-#include "lua54/lualib.h"
 
 /* here some export functions to Lua */
 TOORU_EXPORT int luaopen_libtooru_evosim(lua_State *L);
@@ -28,7 +23,8 @@ TOORU_EXPORT int luaopen_libtooru_evosim(lua_State *L);
 TOORU_EXPORT int luaopen_libtooru_others(lua_State *L);
 
 /* Game_Info contains some necessary infomation about a game needed by C */
-struct Game_Info {
+struct Game_Info
+{
   long long *local_actions_amount;
   long long *ary_hex;
   long long players_amount;
@@ -42,9 +38,5 @@ struct Game_Info {
 /* define some epsilon */
 #define PAYOFF_EPSILON 1e-3
 #define MIXED_EPSILON 1e-3
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

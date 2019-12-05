@@ -23,7 +23,6 @@ static void *outcome_from_lua_whatever_mixed_or_not_new(lua_State *L,
                                                         struct Game_Info *G,
                                                         int idx,
                                                         int *is_mixed) {
-  double *payoff;
   long long pn;
   long long *lan;
   /* used for mixed */
@@ -265,9 +264,11 @@ static long long *best_response_certain_fool_new(const struct Game_Info *G,
   target_action_amount = G->local_actions_amount[target];
   retain = choice[target];
 
-  /* 鉴于最佳对策，所谓的混合策略的最佳对策，其没一个执行元素本身产出的回报是
-   * 完全一致的，并且与混合策略产出的回报一致。故寻找所有的单一最佳对策。这个
-   * 集合可以进行任意组合，都是最佳对策。 */
+  /* In view of the best countermeasures, the best countermeasures of the
+   * so-called hybrid strategy, the returns of each execution element itself
+   * are completely consistent with the returns of the hybrid strategy. So look
+   * for all single best countermeasures. This set can be arbitrarily combined
+   * and is the best countermeasure. */
   brs_l = 0;
   br_payoff = -DBL_MAX;
   payoff = (double *)malloc(sizeof(double) * G->players_amount);
@@ -340,9 +341,11 @@ static long long *best_response_mixed_fool_new(const struct Game_Info *G,
   retain = (double *)malloc(target_mixed_size);
   memcpy(retain, target_mixed, target_mixed_size);
 
-  /* 鉴于最佳对策，所谓的混合策略的最佳对策，其没一个执行元素本身产出的回报是
-   * 完全一致的，并且与混合策略产出的回报一致。故寻找所有的单一最佳对策。这个
-   * 集合可以进行任意组合，都是最佳对策。 */
+  /* In view of the best countermeasures, the best countermeasures of the
+   * so-called hybrid strategy, the returns of each execution element itself
+   * are completely consistent with the returns of the hybrid strategy. So look
+   * for all single best countermeasures. This set can be arbitrarily combined
+   * and is the best countermeasure. */
   brs_l = 0;
   br_payoff = -DBL_MAX;
   payoff = (double *)malloc(sizeof(double) * G->players_amount);
@@ -616,7 +619,6 @@ static int init_game_info_ex(lua_State *L) {
   long long *ary_hex;
   double *pmtx;
   long long tmp;
-  int good;
   long long mixed_len;
   struct Game_Info *G;
 

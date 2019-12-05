@@ -4,14 +4,13 @@
 
 #include "lua54/lauxlib.h"
 #include "lua54/lua.h"
-#include "lua54/lualib.h"
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
 
 void lu_number_array_list(lua_State *L, const double *arr, const long long l) {
   /* first, make a table */
-  lua_createtable(L, l, 0);
+  lua_createtable(L, l<=INT_MAX?(int)l:INT_MAX, 0);
   /* ...;-1=list; */
   /* then, make it great again */
   for (long long i = 0; i < l; i++) {
@@ -25,7 +24,7 @@ void lu_number_array_list(lua_State *L, const double *arr, const long long l) {
 void lu_integer_array_list(lua_State *L, const long long *arr,
                            const long long l) {
   /* first, make a table */
-  lua_createtable(L, l, 0);
+  lua_createtable(L, l<=INT_MAX?(int)l:INT_MAX, 0);
   /* ...;-1=list; */
   /* then, make it great again */
   for (long long i = 0; i < l; i++) {

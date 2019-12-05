@@ -4,6 +4,7 @@
 
 # VScode plugin C/C++ generated cache files
 .vscode/ipch
+.vscode/settings.json
 
 # Personal used dir
 _learn
