@@ -15,11 +15,38 @@ local nfg_end = "}"
 --------------------------------------------------------------------------- MOD
 local _mod = {
   loaders = {
-    toml = require "tooru/third-party/toml".load,
-    yaml = require "lyaml".load
+    toml =nil,
+    yaml = nil,
+    luaraw = nil
   },
   serializors = {}
 }
+
+do -- _mod init
+
+local ok
+ok, _mod.loaders.toml = pcall(require, "toml")
+if not ok then
+  warn '"toml" mod not found, toml support disable'
+  _mod.loaders.toml = function() error('toml support disabled') end
+else _mod.loaders.toml = _mod.loaders.toml.load end
+ok, _mod.loaders.yaml = pcall(require, "lyaml")
+if not ok then
+  warn '"yaml" mod not found, yaml support disable'
+  _mod.loaders.yaml = function() error('yaml support disabled') end
+else _mod.loaders.yaml = _mod.loaders.yaml.load end
+_mod.loaders.luaraw = function(content)
+  local ret
+  if type(content) ~= 'string' then error('invalid content to load') end
+  local good, msg = load('return '..content, 'game definition', 't', {})
+  if not good then error('invalid game define in luaraw: '..ret) end
+  ok, ret = pcall(good)
+  if not ok then error('invalid game define in luaraw: '..ret) end
+  return ret
+end
+
+end -- _mod init
+
 
 ----------------------------------------------------------------- Class diff fun
 -- 由于各个博弈类型之间有着树形的相互包含关系，故从根开始（pre_process），这些预处理函数最后会检查
@@ -87,7 +114,7 @@ end
 ------------------------------------------------------------------ MOD function
 -- Gen a game ini according to content and loader name
 function _mod.read(content, ln)
-  if type(_mod.loaders[ln]) == "function" then
+  if type(_mod.loaders[ln:lower()]) == "function" then
     local ok, ret
     ok, ret = pcall(_mod.loaders[ln], content)
     if not ok then

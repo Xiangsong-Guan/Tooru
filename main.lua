@@ -32,13 +32,13 @@ end
 local USAGE =
   [[
 Project Tooru, we make some calculation for world.
-  -l, --language (default 'en')        Language.
-  -f, --format   (default 'yaml')      Game-define format.
-  -o, --output   (default stdout)      Program infomation output file.
-  -i, --input    (default stdin)       Program command input file.
-  -d, --outdata  (default 'null')      Game analyze data to the file path.
-  -q, --quiet                          Be quiet!
-  <game_path>    (default 'game.yaml') Path to the game-define file.
+  -l, --language (default 'en')          Language.
+  -f, --format   (default 'luaraw')      Game-define format.
+  -o, --output   (default stdout)        Program infomation output file.
+  -i, --input    (default stdin)         Program command input file.
+  -d, --outdata  (default 'null')        Game analyze data to the file path.
+  -q, --quiet                            Be quiet!
+  <game_path>    (default 'game.luaraw') Path to the game-define file.
 ]]
 local args = require 'pl.lapp'(USAGE)
 _G.args = args
