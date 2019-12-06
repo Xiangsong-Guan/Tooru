@@ -2,20 +2,20 @@
 -- Project Tooru
 -- Game solver. Some from libgambit, some from self coding.
 
-local u = require "tooru/u"
+-- local u = require "tooru/u"
 local xtable = require "std.table"
 local tablex = require "pl.tablex"
 local text = _G.TOORU_TEXT
 
 -- This flag can be used to verify a game is already formated to NFG game or not
-local gs_nfg_flag = "^NFG"
+-- local gs_nfg_flag = "^NFG"
 
 ----------------------------------------------------------------- MOD
 -- all of the calculators' name
 local NAME = {"gnm", "payoff", "is_nash", "best_response"}
 -- where these calculators come from?
 local LIBS = {
-  require "libtooru.gs",
+  require "libtooru.lgt",
   require "libtooru.others"
 }
 local _mod = {NAME = NAME, LIBS = LIBS}
@@ -24,6 +24,7 @@ local _mod = {NAME = NAME, LIBS = LIBS}
 -- function
 local map_sl2libs = {
   gnm = LIBS[1],
+  ipa = LIBS[1],
   payoff = LIBS[2],
   is_nash = LIBS[2],
   best_response = LIBS[2]
@@ -42,12 +43,12 @@ local map_sl2rndr = {
 ---------------------------------------------------- Different solve logic
 -- gambit solve logic is usually need 'game.CONTENT' has a gambit format string
 -- and some post-process due gambit's return is always be in CVS string.
-local function gambit_solve(sl, game)
-  if not (type(game.CONTENT) == "string" and game.CONTENT:find(gs_nfg_flag)) then
-    error("solver error: cannot solve the game with " .. sl.NAME)
-  end
-  return u.decvs(map_sl2libs[sl.NAME][sl.NAME](game.CONTENT, sl.renders[1].attr.precision))
-end
+-- local function gambit_solve(sl, game)
+--   if not (type(game.CONTENT) == "string" and game.CONTENT:find(gs_nfg_flag)) then
+--     error("solver error: cannot solve the game with " .. sl.NAME)
+--   end
+--   return u.decvs(map_sl2libs[sl.NAME][sl.NAME](game.CONTENT, sl.renders[1].attr.precision))
+-- end
 
 -- others solve logic is usually need a game_info be pre-genenerated.
 local function others_solve(sl, game, ...)
@@ -64,7 +65,7 @@ end
 -- Speciafy the solver's logic function, some solver need some pre-process
 -- or post-process.
 local map_sl2slog = {
-  gnm = gambit_solve,
+  gnm = others_solve,
   payoff = others_solve,
   is_nash = others_solve,
   best_response = others_solve

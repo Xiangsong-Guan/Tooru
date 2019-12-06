@@ -10,19 +10,37 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* Find all nash eq with gnm in gametracer.
+ *
+ * Return a list of nash eq, each nash eq is also a list indexed by
+ * player-action index. A tag "NASH_EQ" is include for each eq list.
+ *
+ * Lua_Cfun(G)
+ *
+ * <G> Game info */
 static int gnm_ex(lua_State *L)
 {
-    int pn;
+    /* int pn; */
     int *lan;
     int i, j;
-    int good, ret;
-    int total, eq_l;
-    char msg[100];
-    double *payoff_mtx;
+    int /*good,*/ ret;
+    int /*total,*/ eq_l;
+    /* char msg[100]; */
+    /* double *payoff_mtx; */
     double *eqs;
     int eq_num;
-    long long tmp;
+    /* long long tmp; */
+    struct Game_Info *G;
 
+    G = (struct Game_Info *)luaL_checkudata(L, 1, TOORU_EVOSIM_UDN_GAMEINFO);
+    if (G->ary_hex[G->players_amount - 1] * G->local_actions_amount[G->players_amount - 1] * G->players_amount > INT_MAX)
+    {
+        lua_pushnil(L);
+        lua_pushliteral(L, "gametracer only support i32 int");
+        return 2;
+    }
+
+    /* used for not with G
     tmp = luaL_checkinteger(L, 1);
     if (tmp > INT_MAX)
     {
@@ -34,10 +52,15 @@ static int gnm_ex(lua_State *L)
     luaL_argcheck(L, pn > 1, 1, "invalid players number");
     luaL_checktype(L, 2, LUA_TTABLE);
     if (pn != luaL_len(L, 2))
-        luaL_error(L, "lgt error: players number not eq with players actions list length");
-    lan = (int *)malloc(pn * sizeof(int));
+        luaL_error(L, "lgt error: players number not eq with players actions list length"); */
+    lan = (int *)malloc((size_t)G->players_amount * sizeof(int));
+    for (i = 0; i < (int)G->players_amount; i++)
+        lan[i] = (int)G->local_actions_amount[i];
+    /* used for not with G
     total = pn;
-    eq_l = 0;
+    total = (int)G->ary_hex[pn - 1] * lan[pn - 1] * pn; */
+    eq_l = (int)G->mixed_len;
+    /* used for not with G
     for (i = 0; i < pn; i++)
     {
         lua_geti(L, 2, i + 1);
@@ -73,9 +96,9 @@ static int gnm_ex(lua_State *L)
             luaL_argerror(L, 3, msg);
         }
         lua_pop(L, 1);
-    }
+    } */
 
-    eqs = gt_gnm_new(pn, lan, payoff_mtx, &eq_num);
+    eqs = gt_gnm_new((int)G->players_amount, lan, G->pmtx, &eq_num);
     if (eq_num < 0)
     {
         lua_pushnil(L);
@@ -88,6 +111,8 @@ static int gnm_ex(lua_State *L)
         for (i = 0; i < eq_num; i++)
         {
             lua_createtable(L, eq_l, 0);
+            lua_pushliteral(L, "NASH_EQ");
+            lua_setfield(L, -2, "TAG");
             for (j = 0; j < eq_l; j++)
             {
                 lua_pushnumber(L, eqs[i * eq_l + j]);
@@ -99,7 +124,8 @@ static int gnm_ex(lua_State *L)
     }
 
     free(eqs);
-    free(payoff_mtx);
+    /* used for not with G
+    free(payoff_mtx); */
     free(lan);
     return ret;
 }
@@ -114,7 +140,7 @@ static const luaL_Reg LGT[] = {
     {"ipa", ipa_ex},
     {NULL, NULL}};
 
-TOORU_EXPORT int luaopen_lgt(lua_State *L)
+TOORU_EXPORT int luaopen_libtooru_lgt(lua_State *L)
 {
     luaL_newlib(L, LGT);
     return 1;
