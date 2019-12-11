@@ -12,7 +12,7 @@ local text = _G.TOORU_TEXT
 
 ----------------------------------------------------------------- MOD
 -- all of the calculators' name
-local NAME = {"gnm", "payoff", "is_nash", "best_response"}
+local NAME = {"gnm", "ipa", "payoff", "is_nash", "best_response"}
 -- where these calculators come from?
 local LIBS = {
   require "libtooru.lgt",
@@ -35,6 +35,7 @@ local map_sl2libs = {
 -- render's compatablity.
 local map_sl2rndr = {
   gnm = "outcome",
+  ipa = "outcome",
   payoff = "payoff",
   is_nash = "raw",
   best_response = "strategy"
@@ -66,6 +67,7 @@ end
 -- or post-process.
 local map_sl2slog = {
   gnm = others_solve,
+  ipa = others_solve,
   payoff = others_solve,
   is_nash = others_solve,
   best_response = others_solve

@@ -5,7 +5,7 @@
 warn '@on'
 
 -- render and solver setting
-local game2solver = {csg = 'gnm', evo = 'gnm'}
+local game2solver = {csg = 'ipa', evo = 'ipa'}
 
 -- u
 local function nothing()

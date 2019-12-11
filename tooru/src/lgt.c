@@ -149,9 +149,83 @@ static int gnm_ex(lua_State *L)
     return ret;
 }
 
+/* Find all nash eq with ipa in gametracer.
+ *
+ * Return a nash eq, nash eq is a list indexed by
+ * player-action index. A tag "NASH_EQ" is include for eq list.
+ *
+ * Lua_Cfun(G)
+ *
+ * <G> Game info */
 static int ipa_ex(lua_State *L)
 {
-    return 0;
+    int pn;
+    int *lan;
+    int i, j, k;
+    int ret;
+    int eq_l;
+    double *gt_payoff, *payoff_mtx;
+    long long payoff_l, outcome_n;
+    double *eqs;
+    struct Game_Info *G;
+
+    G = (struct Game_Info *)luaL_checkudata(L, 1, TOORU_EVOSIM_UDN_GAMEINFO);
+    outcome_n = G->ary_hex[G->players_amount - 1] * G->local_actions_amount[G->players_amount - 1];
+    payoff_l = outcome_n * G->players_amount;
+    if (payoff_l > INT_MAX)
+    {
+        lua_pushnil(L);
+        lua_pushliteral(L, "gametracer only support i32 int");
+        return 2;
+    }
+
+    /* gt's payoff array is different to ours */
+    gt_payoff = (double *)malloc(sizeof(double) * (size_t)payoff_l);
+    pn = (int)G->players_amount;
+    lan = (int *)malloc((size_t)pn * sizeof(int));
+    payoff_mtx = G->pmtx;
+    k = 0;
+    for (i = 0; i < pn; i++)
+    {
+        lan[i] = (int)G->local_actions_amount[i];
+        for (j = 0; j < (int)outcome_n; j++)
+        {
+            gt_payoff[k] = payoff_mtx[i + (j * pn)];
+            k += 1;
+        }
+    }
+    assert(k == (int)payoff_l);
+
+    eq_l = (int)G->mixed_len;
+    eqs = (double *)malloc(sizeof(double) * (size_t)eq_l);
+    /* i believe ipa only return one nash eq */
+    k = gt_ipa(pn, lan, gt_payoff, eqs);
+
+    if (k < 0)
+    {
+        lua_pushnil(L);
+        lua_pushstring(L, gt_error(k));
+        ret = 2;
+    }
+    else
+    {
+        lua_createtable(L, 1, 0);
+        lua_createtable(L, eq_l, 0);
+        lua_pushliteral(L, "NASH_EQ");
+        lua_setfield(L, -2, "TAG");
+        for (j = 0; j < eq_l; j++)
+        {
+            lua_pushnumber(L, eqs[j]);
+            lua_seti(L, -2, j + 1);
+        }
+        lua_seti(L, -2, 1);
+        ret = 1;
+    }
+
+    free(eqs);
+    free(gt_payoff);
+    free(lan);
+    return ret;
 }
 
 static const luaL_Reg LGT[] = {
