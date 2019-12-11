@@ -73,7 +73,7 @@ static void *outcome_from_lua_whatever_mixed_or_not_new(lua_State *L,
       /* ...;-1=c; */
       outcome[i] = lua_tointegerx(L, -1, &good) - 1;
       luaL_argcheck(L, good && outcome[i] >= 0 && outcome[i] < lan[i], 1,
-                    "invalid choice index, some value is not a int");
+                    "invalid choice index, some value is not a in-range int");
       lua_pop(L, 1);
       /* ...; */
     }
@@ -662,9 +662,9 @@ static int init_game_info_ex(lua_State *L) {
   /* new a udata */
   G = lua_newuserdata(L, sizeof(struct Game_Info));
   /* ...;-1=G */
-  luaL_newmetatable(L, TOORU_EVOSIM_UDN_GAMEINFO);
-  /* ...;-2=G;-1=G_meta; */
-  luaL_setfuncs(L, game_info_meta, 0);
+  if (luaL_newmetatable(L, TOORU_EVOSIM_UDN_GAMEINFO))
+    /* ...;-2=G;-1=G_meta; */
+    luaL_setfuncs(L, game_info_meta, 0);
   lua_pop(L, 1);
   /* ...;-1=G; */
   luaL_setmetatable(L, TOORU_EVOSIM_UDN_GAMEINFO);

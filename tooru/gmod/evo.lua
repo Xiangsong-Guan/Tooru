@@ -180,7 +180,7 @@ local function init(game, ini)
     end
   end
   if join_the_party < ini.simulation_population then
-    warn("evo population approximately warning: initial population cannot be fullfilled due to approxmate or define error, there is only ", tostring(join_the_party), " players defined where the total population is ", tostring(ini.simulation_population)", the rest will be done with last assignation")
+    warn("evo population approximately warning: initial population cannot be fullfilled due to approxmate or define error, there is only ", tostring(join_the_party), " players defined where the total population is ", tostring(ini.simulation_population), ", the rest will be done with last assignation")
     for i = join_the_party + 1, ini.simulation_population do
       init_choice[i] = init_choice[i - 1]
     end
