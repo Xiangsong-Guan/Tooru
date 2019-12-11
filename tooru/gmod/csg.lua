@@ -56,7 +56,8 @@ local function transforms(smtx, expend_scale)
     local asuna, yui = smtx, {}
     local kirito = math.sqrt(#asuna)
     if select(-1, math.modf(kirito)) ~= 0.0 then
-      return nil, "global payoff error: invalid #1 payoff define, it is not a full payoff mtx, but cannot be expended"
+      warn "global payoff error: invalid #1 payoff define, it is not a full payoff mtx, but cannot be expended"
+      return nil
     end
     for i = 1, kirito do
       for j = 1, kirito do
@@ -75,7 +76,8 @@ local function transforms(smtx, expend_scale)
     local new_mtx = {}
     local act_num, p_num = (#smtx) ^ (1 / expend_scale), expend_scale
     if select(-1, math.modf(act_num) ~= 0) then
-      return nil, "global payoff error: invalid #1 payoff define, it is not a full payoff mtx, but cannot be expended"
+      warn "global payoff error: invalid #1 payoff define, it is not a full payoff mtx, but cannot be expended"
+      return nil
     end
     for i, sda in ipairs(smtx) do
       table.insert(new_mtx, sda)
@@ -241,9 +243,10 @@ local function init(game, ini)
       game.PAYOFF_MTX = game.payoffs[1] -- !? 初始完全回报矩阵必须置于回报定义列表第一
     elseif #game.payoffs[1] == single then
       if #game.types ~= 1 then
-        return nil, "payoff mtx error: muti-types but try to extend a single payoff mtx"
+        warn "payoff mtx error: muti-types but try to extend a single payoff mtx"
+        return nil
       end
-      good, msg = transforms(game.payoffs[1], #game.players)
+      good = transforms(game.payoffs[1], #game.players)
       if good then
         game.PAYOFF_MTX = good
         -- HBC Project: Single mtx payoff care
@@ -254,10 +257,11 @@ local function init(game, ini)
           end
         end
       else
-        return nil, msg
+        return nil
       end
     else
-      return nil, "payoff mtx error: invalid global payoff defination #1"
+      warn "payoff mtx error: invalid global payoff defination #1"
+      return nil
     end
   else
     -- 如果开关是打开的，那么提供完全回报矩阵没有意义，之所以要打开，
@@ -314,7 +318,8 @@ function _ex:copy_choice_label2lidx(labels)
       end
     end
     if not cli[pi] then
-      return nil, ("choices transform error: invalid choice for player idx: %d & choice label: %s"):format(pi, label)
+      warn("choices transform error: invalid choice for player idx: ", pi, " & choice label: ", label)
+      return nil
     end
   end
   return cli
@@ -326,7 +331,8 @@ function _ex:copy_choice_lidx2label(lidxs)
     if self.types[self.players[pi].type].actions[cli] then
       labels[pi] = self.actions[self.types[self.players[pi].type].actions[cli]].label
     else
-      return nil, ("choices transform error: invalid choice for player idx: %d & choice lidx: %s"):format(pi, cli)
+      warn("choices transform error: invalid choice for player idx: ", pi, " & choice lidx: ", cli)
+      return nil
     end
   end
   return labels
@@ -385,7 +391,7 @@ function _mod.new(ini)
     attr = {
       title = ini.title or "",
       comment = ini.comment or "",
-      value_switch = ini.value_switch or 0,
+      value_switch = ini.value_switch,
       game_type = ini.game_type,
       type_name = nil
     },

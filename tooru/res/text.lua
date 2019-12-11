@@ -4,7 +4,7 @@
 
 local ok, text = pcall(dofile, "tooru/res/text." .. select(-1, ...) .. ".txt")
 if not ok then
-  _ENV.stderr:write("text res load warning; no " .. tostring(select(-1, ...)) .. " res and loading zh ver. res")
+  warn("text res load warning: no ", tostring(select(-1, ...)), " res and loading zh ver. res")
   text = dofile("tooru/res/text.zh.txt")
 end
 

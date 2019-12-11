@@ -39,7 +39,7 @@ _mod.loaders.luaraw = function(content)
   local ret
   if type(content) ~= 'string' then error('invalid content to load') end
   local good, msg = load('return '..content, 'game definition', 't', {})
-  if not good then error('invalid game define in luaraw: '..ret) end
+  if not good then error('invalid game define in luaraw: '..msg) end
   ok, ret = pcall(good)
   if not ok then error('invalid game define in luaraw: '..ret) end
   return ret
@@ -52,13 +52,18 @@ end -- _mod init
 -- 由于各个博弈类型之间有着树形的相互包含关系，故从根开始（pre_process），这些预处理函数最后会检查
 -- 该配置是否满足自己的子类型。如果满足则进一步细化处理。
 local function read_evo(game)
-  local init_distri = u.split(game.init_distri)
-  game.init_distri = {}
-  for _, s in ipairs(init_distri) do
-    local k, v = u.keypairs(s)
-    assert((k and v) and type(v) == "number", "game input error: invalid evo init_distri")
-    game.init_distri[k] = v
+  if #game.init_distri > 0 then
+    local init_distri = u.split(game.init_distri)
+    game.init_distri = {}
+    for _, s in ipairs(init_distri) do
+      local k, v = u.keypairs(s)
+      assert((k and v) and type(v) == "number", "game input error: invalid evo init_distri")
+      game.init_distri[k] = v
+    end
   end
+
+  assert(tonumber(game.selection_intensity) > 0, 'invalid selection intensity')
+  assert(tonumber(game.simulation_population) > 1 and math.type(game.simulation_population), 'invalid simulation population')
 
   assert(game.game_type:lower() == "evo", 'game input error: this game should be "evo" but not ' .. game.game_type)
   return game
@@ -66,6 +71,7 @@ end
 
 local function read_rep(game)
   for i = 2, #game.strategies, 3 do -- !?
+    assert(type(game.strategies[i-1]) == 'string' and type(game.strategies[i]) == 'string' and type(game.strategies[i+1]) == 'string', 'invalid strategy define') -- !?
     local reg_strs = u.split(game.strategies[i])
     game.strategies[i] = {}
     for _, s in ipairs(reg_strs) do
@@ -73,6 +79,7 @@ local function read_rep(game)
       assert((k and v) and k:match("^[%a_]+[%w_]*"), "game input error: invalid upvalue request")
       game.strategies[i][k] = v
     end
+    assert(game.strategies[i].INIT, 'game define error: strategy '..game.strategies[i-1]..' is lack of INIT') -- !?
 
     game.strategies[i + 1] = src_sgy_prefix .. game.strategies[i + 1] -- !?
   end
@@ -85,12 +92,14 @@ local function read_rep(game)
 end
 
 local function pre_process(game)
+  assert(game.value_switch == 0 or game.value_switch == 1, "invalid value switch define")
   assert(game.types and game.action_sets and game.payoffs, "game input error: incompleted game define")
 
   assert(#game.types > 0, "game input error: invalid types define")
   for i, x in ipairs(game.types) do
     game.types[i] = u.split(x)
     assert(#game.types[i] == 4, "game input error: invalid types define") -- !?
+    assert(type(game.types[i][1]) == 'string' and type(game.types[i][2]) == 'number' and type(game.types[i][3]) == 'number' and type(game.types[i][4]) == 'number', 'invalid strategy define') -- !?
   end
   assert(#game.action_sets > 0, "game input error: invalid actions define")
   for i, s in ipairs(game.action_sets) do
@@ -102,6 +111,9 @@ local function pre_process(game)
     if type(p) == "string" then
       game.payoffs[i] = src_pf_prefix .. p
     end
+  end
+  for i, t in ipairs(game.types) do
+    assert(0 < t[3] and t[3] <= #game.action_sets and 0 < t[4] and t[4] <= #game.payoffs and 0 < t[2], 'invalid types define for #'..i)
   end
 
   if game.strategies then -- 重复博弈富于心计，夏亚算计我
@@ -118,24 +130,25 @@ function _mod.read(content, ln)
     local ok, ret
     ok, ret = pcall(_mod.loaders[ln], content)
     if not ok then
-      return nil, "content load error: bad format data, " .. ret:match(".-%:% ([^\n]+)")
+      warn("content load error: bad format data, ", ret:match(".-%:% ([^\n]+)"))
+      return nil
     end
     ok, ret = pcall(pre_process, ret)
     if not ok then
-      return nil, ret:match(".-%:% ([^\n]+)")
+      warn(ret:match(".-%:% ([^\n]+)"))
+      return nil
     end
     return ret
   else
-    return nil, "content load error: no such loader " .. ln
+    warn("content load error: no such loader ", ln)
+    return nil
   end
 end
 
 function _mod.serializors.nfg_convertor(game)
   if game.attr.game_type ~= "csg" and game.attr.game_type ~= "evo" and game.attr.game_type ~= "rpg" then
-    return nil, ("game type incompatible error: this kind of tool request game type %q, but got %q, abandoned\n"):format(
-      "csg/evo/rep",
-      game.attr.game_type
-    )
+    warn("game type incompatible error: this kind of tool request game type csg/evo/rep, but got ",game.attr.game_type ", abandoned")
+    return nil
   end
   -- local nfg_file = io.open(game.attr.title .. nfg_ext, 'w')
   local nfg = {}

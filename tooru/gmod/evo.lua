@@ -155,10 +155,10 @@ local function init(game, ini)
   math.randomseed(os.time())
 
   -- 初始化状态
-  if 0 == ini.simulation_population then
-    io.write("evo infinity population waring: cannot simulation evo process, only do theoretically analysis\n")
-    return
-  end
+  -- if 0 == ini.simulation_population then
+  --   warn "evo infinity population waring: cannot simulation evo process, only do theoretically analysis"
+  --   return nil
+  -- end
   local init_choice, join_the_party = {}, 0
   -- in evo game, act local index is same as global index
   for sgy, pop in pairs(ini.init_distri) do
@@ -166,24 +166,13 @@ local function init(game, ini)
       local gayfriend = pop * ini.simulation_population
       local overcook = math.floor(gayfriend)
       if overcook < pop then
-        io.write(
-          ("evo population approximately warning: initial population distribution calculation is not accurate for stratrgy %q, original distribution is %f, population result %f is approximately equal to %d\n"):format(
-            sgy,
-            pop,
-            gayfriend,
-            overcook
-          )
-        )
+        warn("evo population approximately warning: initial population distribution calculation is not accurate for stratrgy ", tostring(sgy), ", original distribution is ", tostring(pop), ", population result ", tostring(gayfriend), " is approximately equal to ", tostring(overcook))
       end
       pop = overcook
     end
     for _ = 1, pop do
       if join_the_party == ini.simulation_population then
-        io.write(
-          'evo overflow population waring: too much players defined in initial distribution, cutting strategy "' ..
-            tostring(sgy),
-          '.."\n'
-        )
+        warn('evo overflow population waring: too much players defined in initial distribution, cutting strategy "', tostring(sgy))
         break
       end
       join_the_party = join_the_party + 1
@@ -191,12 +180,7 @@ local function init(game, ini)
     end
   end
   if join_the_party < ini.simulation_population then
-    io.write(
-      ("evo population approximately warning: initial population cannot be fullfilled due to approxmate or define error, there is only %d players defined where the total population is %d, the rest will be done with last assignation\n"):format(
-        join_the_party,
-        ini.simulation_population
-      )
-    )
+    warn("evo population approximately warning: initial population cannot be fullfilled due to approxmate or define error, there is only ", tostring(join_the_party), " players defined where the total population is ", tostring(ini.simulation_population)", the rest will be done with last assignation")
     for i = join_the_party + 1, ini.simulation_population do
       init_choice[i] = init_choice[i - 1]
     end
@@ -237,7 +221,8 @@ local _ex = {
 -- Just return when it is stop.
 function _ex:quick_evo(stop, limit, rnd)
   if rnd.NAME ~= "evo_historys" then
-    return nil, "evo sim error: incompatable render"
+    warn "evo sim error: incompatable render"
+    return nil
   end
 
   local when_stop = self.historys:dash_with_pairs(stop, limit)
@@ -245,11 +230,13 @@ function _ex:quick_evo(stop, limit, rnd)
   local banana, map_term2i, map_i2term = plt_format_banner(self.actions, self.attr.simulation_population)
   local good, msg = rnd:banner(banana)
   if not good then
-    return nil, msg
+    warn(msg)
+    return nil
   end
   good, msg = rnd:write(plt_reunion_adish(self.historys, self.attr.simulation_population, #self.actions))
   if not good then
-    return nil, msg
+    warn(msg)
+    return nil
   end
 
   rnd._plot_aux = {map_term2i, map_i2term}
@@ -259,13 +246,15 @@ end
 -- This function is not 'that' quick, but it can make rho calculation.
 function _ex:evo(stop, limit, rnd)
   if rnd.NAME ~= "evo_historys" then
-    return nil, "evo sim error: incompatable render"
+    warn "evo sim error: incompatable render"
+    return nil
   end
 
   local banana, map_term2i, map_i2term = plt_format_banner(self.actions, self.attr.simulation_population, true)
   local good, msg = rnd:banner(banana)
   if not good then
-    return nil, msg
+    warn(msg)
+    return nil
   end
   rnd._plot_aux = {map_term2i, map_i2term}
 
@@ -276,7 +265,8 @@ function _ex:evo(stop, limit, rnd)
   u.append(content[1], self.init_chance)
   good, msg = rnd:write(content)
   if not good then
-    return nil, msg
+    warn(msg)
+    return nil
   end
 
   local nochange = 0
@@ -299,7 +289,8 @@ function _ex:evo(stop, limit, rnd)
     u.append(content[1], last_chance)
     good, msg = rnd:write(content)
     if not good then
-      return nil, msg
+      warn(msg)
+      return nil
     end
 
     if nochange > stop then
@@ -333,21 +324,19 @@ end
 --------------------------------------------------- MOD function - evo-game obj.
 function _mod.new(ini)
   ---------------------------------------------- *** EVO Game instance (1/2) ***
-  local good, msg = rpg.new(ini)
-  if not good then
-    return nil, msg
-  end
+  local good = rpg.new(ini)
+  if not good then return nil end
   good.attr.stop = nil -- this is a delete
   good.historys = nil
   good.init_choice = nil
   good.init_chance = nil
-  good.attr.selection_intensity = ini.selection_intensity or 1
-  good.attr.mutations_intensity = ini.mutations_intensity or 0.0
-  good.attr.simulation_population = ini.simulation_population or 0
+  good.attr.selection_intensity = ini.selection_intensity
+  good.attr.mutations_intensity = tonumber(ini.mutations_intensity) or 0
+  good.attr.simulation_population = ini.simulation_population
   -- 明显，当sp小于3；或者是无穷大时，模拟没有任何意义
-  if good.attr.simulation_population > 2 then
-    xtable.merge(good, _ex)
-  end
+  -- if good.attr.simulation_population > 2 then
+  xtable.merge(good, _ex)
+  -- end
   ---------------------------------------------- *** EVO Game instance (1/2) ***
   return init(good, ini)
 end

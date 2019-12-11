@@ -40,21 +40,29 @@ function formater.raw(yuubin)
   return pp.write(yuubin) .. "\n"
 end
 
-function formater.csv(yuubin)
+function formater.csv(yuubin, sp)
   local content = {}
   if type(yuubin) == "string" then
+    warn 'csv formater just recive a string, return back'
     return yuubin
   elseif type(yuubin) ~= "table" then
-    return nil, 'cannot handle input data, only "list" or formated "string" is valid'
+    warn 'cannot handle input data, only "list" or formated "string" is valid'
+    return nil
+  end
+  sp = sp or '\t'
+  if type(sp) ~= 'string' then
+    warn 'invalid split string for csv, using \\t'
+    sp = '\t'
   end
 
   for i, e in ipairs(yuubin) do
     if (type(e) == "number") or (type(e) == "string") then
       content[i] = e
     elseif type(e) ~= "table" then
-      return nil, 'cannot handle input data item, only "list", "string", or "number" is valid'
+      warn 'cannot handle input data item, only "list", "string", or "number" is valid'
+      return nil
     end
-    content[i] = table.concat(e, "\t")
+    content[i] = table.concat(e, sp)
   end
   -- we need this '' at the end of 'content' list, or we will suffer the
   -- too looooooooooooooooooooooooooooong a single line
@@ -102,13 +110,18 @@ end
 
 -------------------------------------------------------- Internal used porcessor
 local function just_check(data)
-  if not data then
-    return nil, "render data process error: nil data"
+  if type(data) ~= 'table' then
+    warn "render data process error: invalid data, need list"
+    return nil
   end
   return data
 end
 
-local data_processor = {evo_historys = just_check, outcome = nil}
+local data_processor = {
+  evo_historys = just_check,
+  outcome = nil,
+  strategy = nil
+}
 
 -- this return things really complex
 -- ret = {TYPE, SOURCE, [1], [2], ...} the list of all outcome data
@@ -366,23 +379,25 @@ function _mod.new(name, format, file, is_ins, precision, is_banner)
   if type(file) == "string" then
     local good, msg = io.open(file, "w")
     if not good then
-      return nil, msg
+      warn("render cannot open file: ", msg)
+      return nil
     end
     file = good
   end
-  if not io.type(file) then
-    return nil, "render initialization error: not a output file"
+  if io.type(file) ~= 'file' then
+    warn ("render initialization error: not a output file for ", tostring(file), " which is ", tostring(io.type(file)))
+    return nil
   end
   if not tablex.find(_mod.NAME, name) then
-    return nil, "render initialization error: no such render for " .. name
+    warn("render initialization error: no such render for ", name)
+    return nil
   end
   if not tablex.find(_mod.TYPE, format) then
-    return nil, "render initialization error: no such render with " .. format .. "format"
+    warn("render initialization error: no such render with ", format, " format")
+    return nil
   end
-  if name == "simple" then
-    if format ~= "raw" then
-      io.write 'render warning: simple render casted to "raw" format\n'
-    end
+  if name == "simple" and format ~= "raw" then
+    warn 'render warning: simple render casted to "raw" format'
     format = "raw"
   end
 

@@ -6,20 +6,21 @@ local _mod = {}
 
 function _mod.new(ini)
   if type(ini) ~= "table" then
-    return nil, "input error: non-table input for initialize a game"
+    warn "input error: non-table input for initialize a game"
+    return nil
   end
   if type(ini.game_type) ~= "string" then
-    return nil, "input error: invalid game type"
+    warn "input error: invalid game type"
+    return nil
   end
   local ok, game_mod = pcall(require, "tooru/gmod/" .. ini.game_type)
   if not ok then
-    return nil, "game mod loading error: no mod for game type " .. ini.game_type
+    warn("game mod loading error: no mod for game type " .. ini.game_type)
+    return nil
   end
 
-  local game, msg = game_mod.new(ini)
-  if not game then
-    return nil, msg
-  end
+  local game = game_mod.new(ini)
+  if not game then return nil end
   if #game_mod.SERIALIZORS > 0 then
     game.CONTENT = require "tooru/fp".serializors[game_mod.SERIALIZORS[1]](game)
     assert(

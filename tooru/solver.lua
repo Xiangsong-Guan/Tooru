@@ -77,44 +77,42 @@ local _ex = {solve = nil}
 ------------------------------------------------ *** Solver instance (2/2) ***
 
 function _ex:solve(game, ...)
-  local ok, ans = pcall(map_sl2slog[self.NAME], self, game, ...)
-  if not ok then
-    return nil, ans:match(".-%:% ([^\n]+)")
+  local ok, good, msg = pcall(map_sl2slog[self.NAME], self, game, ...)
+  if not ok or not good then
+    local what = msg or good:match(".-%:% ([^\n]+)")
+    warn('solve failed: ', what)
+    return nil
   end
-  if type(ans) == "table" then
-    ans.SOURCE = self.NAME
+  if type(good) == "table" then
+    good.SOURCE = self.NAME
   end
   for _, render in ipairs(self.renders) do
     if text.banner[self.NAME] then
-      local good, msg = render:banner(text.banner[self.NAME])
-      if not good then
-        return ans, msg
-      end
+      ok, msg = render:banner(text.banner[self.NAME])
+      if not ok then warn('cannot write to render: ', msg) end
     end
-    local good, msg = render:write(ans, game)
-    if not good then
-      return ans, msg
-    end
+    ok, msg = render:write(good, game)
+    if not ok then warn('cannot write to render: ', msg) end
   end
-  return ans
+  return good
 end
 
 ------------------------------------------------------------- MOD function
 function _mod.new(name, renders)
   if not tablex.find(NAME, name) then
-    return nil, "no solver err: " .. tostring(name)
+    warn("no solver err: " .. tostring(name))
+    return nil
   end
-  -- For now, render is not must.
-  if not renders then
-    renders = {}
-  end
+  -- For now, render is must.
+  if not renders or #renders < 1 then warn 'no rander to write for solver'; return nil end
   -- when only one renders in, we make it in list too.
   if renders.FILE then
     renders = {renders}
   end
   for _, render in ipairs(renders) do
     if map_sl2rndr[name] ~= render.NAME then
-      return nil, ("solver incompatible error: %s with render %s"):format(name, render.NAME)
+      warn("solver incompatible error: ", name, " with render ", render.NAME)
+      return nil
     end
   end
 
@@ -133,7 +131,8 @@ end
 --  not a render
 function _mod.quick_simple_naive_new(name)
   if not tablex.find(NAME, name) then
-    return nil, "no solver err: " .. tostring(name)
+    warn("no solver err: ", tostring(name))
+    return nil
   end
 
   ------------------------------------------ *** Quick Solver instance ***

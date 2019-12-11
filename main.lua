@@ -2,6 +2,8 @@
 -- Project Tooru
 -- tooru application
 
+warn '@on'
+
 -- render and solver setting
 local game2solver = {csg = 'gnm', evo = 'gnm'}
 
@@ -70,15 +72,13 @@ local doutput = good
 local tooru = require 'tooru'
 
 -- initialize game
-good, msg = tooru.reader.read(ini_f:read('a'), args.format)
+good = tooru.reader.read(ini_f:read('a'), args.format)
 if not good then
-  io.stderr:write(msg, '\n')
   os.exit(2)
 end
 local defined = good
-good, msg = tooru.game.new(defined)
+good = tooru.game.new(defined)
 if not good then
-  io.stderr:write(msg, '\n')
   os.exit(2)
 end
 local game = good
@@ -145,11 +145,8 @@ local function report()
     'You can find more details in your very own game-define file, game serializors generated content (command used), or other command generated content (which you may use below).\n'
   )
   io.write 'Equilibrium Calcularion (some stochastic algorithms may gen vary results each time)...\n'
-  good, msg = ne_solver:solve(game)
-  if not good then
-    io.write 'Unexpected error raised durring NE solving.\n'
-    io.stderr:write(msg, '\n')
-  end
+  good = ne_solver:solve(game)
+  if not good then warn 'unexpected error raised durring NE solving' end
   sub_report[game.attr.game_type]()
   io.write 'This is the end of report.\n'
 end
@@ -211,17 +208,22 @@ function exec.clear()
 end
 
 -- some really functionality function
-local _is_nash_teacher = tooru.calculator.new('is_nash')
+local _is_nash_teacher = tooru.calculator.quick_simple_naive_new('is_nash')
 function exec.isnash(outcome_raw)
   good, msg = cook(outcome_raw)
   if not good then
     return msg
   end
-  good, msg = _is_nash_teacher:solve(game, good)
-  if not good and msg then
-    return msg
+  good = _is_nash_teacher:solve(game, good)
+  if type(good) == 'boolean' then
+    io.write(tostring(good), '\n')
+  else
+    return 'command error, see warning msg'
   end
-  io.write(tostring(good), '\n')
+end
+if not _is_nash_teacher then
+  warn '"isnash" is unavilible'
+  exec.isnash = function () return 'this command is unavilible' end
 end
 local _br_renders = {
   tooru.render.new('strategy', 'human_read', io.output()),
@@ -233,10 +235,12 @@ function exec.br(choices_raw)
   if not good then
     return msg
   end
-  good, msg = _br_teacher:solve(game, good, msg)
-  if not good then
-    return msg
-  end
+  good = _br_teacher:solve(game, good, msg)
+  if not good then return 'command error, see warning msg' end
+end
+if #_br_renders ~= 2 or not _br_teacher then
+  warn '"br" is unavilibe'
+  exec.br = function () return 'this command is unavilible' end
 end
 local _nash_renders = {
   tooru.render.new('outcome', 'human_read', io.output()),
@@ -244,10 +248,12 @@ local _nash_renders = {
 }
 local _nash_teacher = tooru.calculator.new(sname, _nash_renders)
 function exec.nash()
-  good, msg = _nash_teacher:solve(game)
-  if not good then
-    return msg
-  end
+  good = _nash_teacher:solve(game)
+  if not good then return 'command error, see warning msg' end
+end
+if #_nash_renders ~= 2 or not _nash_teacher then
+  warn '"nash" is unavilibe'
+  exec.nash = function () return 'this command is unavilible' end
 end
 
 -- dive into main loop
