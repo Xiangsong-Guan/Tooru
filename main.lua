@@ -64,7 +64,11 @@ if args.outdata ~= 'null' then
     os.exit(1)
   end
 else
-  good = {}
+  if os.getenv('OS') == 'Windows_NT' then
+    good = io.open('nul', 'w')
+  else
+    good = io.open('/dev/null', 'w')
+  end
 end
 local doutput = good
 
