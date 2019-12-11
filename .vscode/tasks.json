@@ -7,7 +7,21 @@
             "label": "Local Install DLL",
             "type": "shell",
             "command": "copy build/tooru.dll E:/inPATH/libtooru.dll; copy tooru E:/inPATH/lua/tooru -r -force",
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run main",
+            "type": "shell",
+            "command": "lua main.lua test/rps.luaraw",
+            "dependsOn": "Local Install DLL",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
         }
     ]
 }
