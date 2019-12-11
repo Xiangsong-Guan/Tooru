@@ -9,6 +9,7 @@
 #include "tooru.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 /* Find all nash eq with gnm in gametracer.
  *
@@ -20,25 +21,45 @@
  * <G> Game info */
 static int gnm_ex(lua_State *L)
 {
-    /* int pn; */
+    int pn;
     int *lan;
-    int i, j;
+    int i, j, k;
     int /*good,*/ ret;
     int /*total,*/ eq_l;
     /* char msg[100]; */
-    /* double *payoff_mtx; */
+    double *gt_payoff, *payoff_mtx;
+    long long payoff_l, outcome_n;
     double *eqs;
     int eq_num;
     /* long long tmp; */
     struct Game_Info *G;
 
     G = (struct Game_Info *)luaL_checkudata(L, 1, TOORU_EVOSIM_UDN_GAMEINFO);
-    if (G->ary_hex[G->players_amount - 1] * G->local_actions_amount[G->players_amount - 1] * G->players_amount > INT_MAX)
+    outcome_n = G->ary_hex[G->players_amount - 1] * G->local_actions_amount[G->players_amount - 1];
+    payoff_l = outcome_n * G->players_amount;
+    if (payoff_l > INT_MAX)
     {
         lua_pushnil(L);
         lua_pushliteral(L, "gametracer only support i32 int");
         return 2;
     }
+
+    /* gt's payoff array is different to ours */
+    gt_payoff = (double *)malloc(sizeof(double) * (size_t)payoff_l);
+    pn = (int)G->players_amount;
+    lan = (int *)malloc((size_t)pn * sizeof(int));
+    payoff_mtx = G->pmtx;
+    k = 0;
+    for (i = 0; i < pn; i++)
+    {
+        lan[i] = (int)G->local_actions_amount[i];
+        for (j = 0; j < (int)outcome_n; j++)
+        {
+            gt_payoff[k] = payoff_mtx[i + (j * pn)];
+            k += 1;
+        }
+    }
+    assert(k == (int)payoff_l);
 
     /* used for not with G
     tmp = luaL_checkinteger(L, 1);
@@ -53,9 +74,6 @@ static int gnm_ex(lua_State *L)
     luaL_checktype(L, 2, LUA_TTABLE);
     if (pn != luaL_len(L, 2))
         luaL_error(L, "lgt error: players number not eq with players actions list length"); */
-    lan = (int *)malloc((size_t)G->players_amount * sizeof(int));
-    for (i = 0; i < (int)G->players_amount; i++)
-        lan[i] = (int)G->local_actions_amount[i];
     /* used for not with G
     total = pn;
     total = (int)G->ary_hex[pn - 1] * lan[pn - 1] * pn; */
@@ -98,7 +116,7 @@ static int gnm_ex(lua_State *L)
         lua_pop(L, 1);
     } */
 
-    eqs = gt_gnm_new((int)G->players_amount, lan, G->pmtx, &eq_num);
+    eqs = gt_gnm_new(pn, lan, gt_payoff, &eq_num);
     if (eq_num < 0)
     {
         lua_pushnil(L);
@@ -126,6 +144,7 @@ static int gnm_ex(lua_State *L)
     free(eqs);
     /* used for not with G
     free(payoff_mtx); */
+    free(gt_payoff);
     free(lan);
     return ret;
 }
