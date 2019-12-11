@@ -52,7 +52,7 @@ local map_sl2rndr = {
 -- end
 
 -- others solve logic is usually need a game_info be pre-genenerated.
-local function others_solve(sl, game, ...)
+local function others_solve(name, game, ...)
   if type(game.C_GAME_INFO) ~= "userdata" then
     local lan = {}
     for i, p in ipairs(game.players) do
@@ -60,7 +60,7 @@ local function others_solve(sl, game, ...)
     end
     game.C_GAME_INFO = LIBS[2].new(#game.players, lan, game.PAYOFF_MTX)
   end
-  return map_sl2libs[sl.NAME][sl.NAME](game.C_GAME_INFO, ...)
+  return map_sl2libs[name][name](game.C_GAME_INFO, ...)
 end
 
 -- Speciafy the solver's logic function, some solver need some pre-process
@@ -79,8 +79,8 @@ local _ex = {solve = nil}
 ------------------------------------------------ *** Solver instance (2/2) ***
 
 function _ex:solve(game, ...)
-  local ok, good, msg = pcall(map_sl2slog[self.NAME], self, game, ...)
-  if not ok or not good then
+  local ok, good, msg = pcall(map_sl2slog[self.NAME], self.NAME, game, ...)
+  if not ok or (not good and msg) then
     local what = msg or good:match(".-%:% ([^\n]+)")
     warn('solve failed: ', what)
     return nil
@@ -140,7 +140,18 @@ function _mod.quick_simple_naive_new(name)
   ------------------------------------------ *** Quick Solver instance ***
   return {
     NAME = name,
-    solve = map_sl2slog[name]
+    solve = function(_, game, ...)
+      local ok, good, msg = pcall(map_sl2slog[name], name, game, ...)
+      if not ok or (not good and msg) then
+        local what = msg or good:match(".-%:% ([^\n]+)")
+        warn('solve failed: ', what)
+        return nil
+      end
+      if type(good) == "table" then
+        good.SOURCE = name
+      end
+      return good
+    end
   }
   ------------------------------------------ *** Quick Solver instance ***
 end
