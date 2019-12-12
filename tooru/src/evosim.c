@@ -486,7 +486,7 @@ static int init_historys(lua_State *L) {
   /* 1=init_choice;2=an;3=sp;4=si;5=mi; */
   /* set method and meta table and some little attrs for new Historys */
   struct Historys *hs =
-      (struct Historys *)lua_newuserdata(L, sizeof(struct Historys));
+      (struct Historys *)lua_newuserdatauv(L, sizeof(struct Historys), 1);
   /* ...; 6=hs */
   if (luaL_newmetatable(L, TOORU_EVOSIM_UDN_HISTORYS)) {
     /* ...; 6=hs; 7=historys_meta; */

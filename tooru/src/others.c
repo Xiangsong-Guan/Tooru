@@ -660,7 +660,7 @@ static int init_game_info_ex(lua_State *L) {
   /* ... */
 
   /* new a udata */
-  G = lua_newuserdata(L, sizeof(struct Game_Info));
+  G = lua_newuserdatauv(L, sizeof(struct Game_Info), 1);
   /* ...;-1=G */
   if (luaL_newmetatable(L, TOORU_EVOSIM_UDN_GAMEINFO))
     /* ...;-2=G;-1=G_meta; */
