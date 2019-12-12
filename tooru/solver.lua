@@ -52,7 +52,7 @@ local map_sl2rndr = {
 -- end
 
 -- others solve logic is usually need a game_info be pre-genenerated.
-local function others_solve(name, game, ...)
+local function others_solve(self, game, ...)
   if type(game.C_GAME_INFO) ~= "userdata" then
     local lan = {}
     for i, p in ipairs(game.players) do
@@ -60,7 +60,7 @@ local function others_solve(name, game, ...)
     end
     game.C_GAME_INFO = LIBS[2].new(#game.players, lan, game.PAYOFF_MTX)
   end
-  return map_sl2libs[name][name](game.C_GAME_INFO, ...)
+  return map_sl2libs[self.NAME][self.NAME](game.C_GAME_INFO, ...)
 end
 
 -- Speciafy the solver's logic function, some solver need some pre-process
@@ -79,24 +79,24 @@ local _ex = {solve = nil}
 ------------------------------------------------ *** Solver instance (2/2) ***
 
 function _ex:solve(game, ...)
-  local ok, good, msg = pcall(map_sl2slog[self.NAME], self.NAME, game, ...)
-  if not ok or (not good and msg) then
-    local what = msg or good:match(".-%:% ([^\n]+)")
-    warn('solve failed: ', what)
+  local good, msg = map_sl2slog[self.NAME](self, game, ...)
+  if not good and msg then
+    warn('solve failed: ', msg)
     return nil
   end
   if type(good) == "table" then
     good.SOURCE = self.NAME
   end
+  local ans = good
   for _, render in ipairs(self.renders) do
     if text.banner[self.NAME] then
-      ok, msg = render:banner(text.banner[self.NAME])
-      if not ok then warn('cannot write to render: ', msg) end
+      good, msg = render:banner(text.banner[self.NAME])
+      if not good then warn('cannot write to render: ', msg) end
     end
-    ok, msg = render:write(good, game)
-    if not ok then warn('cannot write to render: ', msg) end
+    good, msg = render:write(ans, game)
+    if not good then warn('cannot write to render: ', msg) end
   end
-  return good
+  return ans
 end
 
 ------------------------------------------------------------- MOD function
@@ -106,7 +106,7 @@ function _mod.new(name, renders)
     return nil
   end
   -- For now, render is must.
-  if not renders or #renders < 1 then warn 'no rander to write for solver'; return nil end
+  if not renders or #renders < 1 then warn 'no render to write for solver'; return nil end
   -- when only one renders in, we make it in list too.
   if renders.FILE then
     renders = {renders}
@@ -140,18 +140,7 @@ function _mod.quick_simple_naive_new(name)
   ------------------------------------------ *** Quick Solver instance ***
   return {
     NAME = name,
-    solve = function(_, game, ...)
-      local ok, good, msg = pcall(map_sl2slog[name], name, game, ...)
-      if not ok or (not good and msg) then
-        local what = msg or good:match(".-%:% ([^\n]+)")
-        warn('solve failed: ', what)
-        return nil
-      end
-      if type(good) == "table" then
-        good.SOURCE = name
-      end
-      return good
-    end
+    solve = map_sl2slog[name]
   }
   ------------------------------------------ *** Quick Solver instance ***
 end
