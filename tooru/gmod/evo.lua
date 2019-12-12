@@ -152,7 +152,7 @@ end
 
 ------------------------------------------------------------------- INIT function
 local function init(game, ini)
-  math.randomseed(os.time())
+  -- math.randomseed(os.time())
 
   -- 初始化状态
   -- if 0 == ini.simulation_population then
