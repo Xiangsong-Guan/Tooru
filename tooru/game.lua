@@ -15,7 +15,7 @@ function _mod.new(ini)
   end
   local ok, game_mod = pcall(require, "tooru/gmod/" .. ini.game_type)
   if not ok then
-    warn("game mod loading error: no mod for game type " .. ini.game_type)
+    warn("game mod loading error: no mod for game type " .. tostring(ini.game_type))
     return nil
   end
 

@@ -125,10 +125,14 @@ local function factory_of_calc_payoff_from_mtx(ini, my_pos, payoff_idx)
     end
   elseif type(payoff) == "string" then
     -- 一个效用函数
-    local payoff_calc = load(payoff, "payoff calc function code", "t", nil)
+    local good, msg = load(payoff, "payoff calc function code", "t", nil)
+      if not good then
+        warn("error when loading payoff function for player #", tostring(my_pos), ": ", msg); 
+        return nil
+      end
     -- ini.payoffs should be pre-process for pass-in-arg
     return function(choice)
-      return payoff_calc(choice, my_pos)
+      return good(choice, my_pos)
     end
   elseif type(payoff) == "table" and (#payoff == single_len) then
     -- 一个单方回报矩阵，其它情况不合法
@@ -152,14 +156,11 @@ local function factory_of_calc_payoff_from_mtx(ini, my_pos, payoff_idx)
     -- 单方矩阵不再用于直接计算，它将被扩展为完全矩阵然后用于计算
     return single_mtx_mark
   elseif type(payoff) == "table" then
-    return nil, ("payoff define error: not valid payoff #%d and payoff len is %d, but need be %d or %d"):format(
-      payoff_idx,
-      #payoff,
-      full_len,
-      single_len
-    )
+    warn("payoff define error: not valid payoff #", tostring(payoff_idx), " and payoff len is ", tostring(#payoff), ", but need be ", tostring(full_len), " or ", tostring(single_len))
+    return nil
   else
-    return nil, ("payoff define error: not valid payoff #%d whose type is %s"):format(payoff_idx, type(payoff))
+    warn("payoff define error: not valid payoff #", tostring(payoff_idx), " whose type is ", type(payoff))
+    return nil
   end
 end
 
@@ -168,7 +169,7 @@ end
 -- 类似与原型模式的方案去重用代码。也就是说其他类型博弈都是基于一个他的原型（和他最接近的一个
 -- 博弈类型）去产生。
 local function init(game, ini)
-  local good, msg
+  local good
   FruitsBasket()
 
   -- 初始化全局行为空间
@@ -222,10 +223,8 @@ local function init(game, ini)
       pos = pos + 1
       -- 这里可能返回一个 HBC Single payoff mtx 标记，这写参与者的回报计算函数将延迟到完全回
       -- 报矩阵计算完成后再行绑定
-      good, msg = factory_of_calc_payoff_from_mtx(ini, pos, payoff_idx)
-      if not good then
-        return nil, msg
-      end
+      good = factory_of_calc_payoff_from_mtx(ini, pos, payoff_idx)
+      if not good then warn 'error init payoff'; return nil end
       if player_num == 1 then
         pl = type_label
       else
@@ -264,6 +263,7 @@ local function init(game, ini)
       return nil
     end
   else
+    -- UNTESTED
     -- 如果开关是打开的，那么提供完全回报矩阵没有意义，之所以要打开，
     -- 就是因为没法手动计算这个矩阵
     -- value_switch on, calculate in time
@@ -277,7 +277,12 @@ local function init(game, ini)
     end
     for i = 1, full, #JFGI do
       for j = 0, #RTFM - 1 do
-        game.PAYOFF_MTX[i + j] = game.players[i + j].payoff(RTFM)
+        local ok
+        ok, game.PAYOFF_MTX[i + j] = pcall(game.players[i + j].payoff, RTFM)
+        if not ok then
+          warn('error when computing payoff in player ', game.players[i + j].label, '\'s function: ', game.PAYOFF_MTX[i + j])
+          return nil
+        end
       end
       RTFM[1] = RTFM[1] + 1
       local j, done = 1, false
@@ -318,7 +323,7 @@ function _ex:copy_choice_label2lidx(labels)
       end
     end
     if not cli[pi] then
-      warn("choices transform error: invalid choice for player idx: ", pi, " & choice label: ", label)
+      warn("choices transform error: invalid choice for player idx: ", tostring(pi), " & choice label: ", label)
       return nil
     end
   end
@@ -331,7 +336,7 @@ function _ex:copy_choice_lidx2label(lidxs)
     if self.types[self.players[pi].type].actions[cli] then
       labels[pi] = self.actions[self.types[self.players[pi].type].actions[cli]].label
     else
-      warn("choices transform error: invalid choice for player idx: ", pi, " & choice lidx: ", cli)
+      warn("choices transform error: invalid choice for player idx: ", (pi), " & choice lidx: ", (cli))
       return nil
     end
   end

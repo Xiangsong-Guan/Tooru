@@ -102,7 +102,7 @@ end
 ------------------------------------------------------------- MOD function
 function _mod.new(name, renders)
   if not tablex.find(NAME, name) then
-    warn("no solver err: " .. tostring(name))
+    warn("no solver err: ", tostring(name))
     return nil
   end
   -- For now, render is must.
@@ -113,7 +113,7 @@ function _mod.new(name, renders)
   end
   for _, render in ipairs(renders) do
     if map_sl2rndr[name] ~= render.NAME then
-      warn("solver incompatible error: ", name, " with render ", render.NAME)
+      warn("solver incompatible error: ", tostring(name), " with render ", render.NAME)
       return nil
     end
   end

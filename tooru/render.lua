@@ -264,9 +264,9 @@ end
 -- directly format to a certain format string. And make it in line to be
 -- eventully written.
 function _ex:write(...)
-  local good, msg = data_processor[self.NAME](...)
+  local good = data_processor[self.NAME](...)
   if not good then
-    return nil, msg
+    return nil, 'invalid data for this render'
   end
   table.insert(self._wait, good)
   if self.attr.is_ins then
@@ -279,9 +279,9 @@ end
 -- write it to the file.
 function _ex:flush()
   for _, ant in ipairs(self._wait) do
-    local good, msg = formater[self.TYPE](ant)
+    local good = formater[self.TYPE](ant)
     if not good then
-      return nil, msg
+      return nil, 'invalid data for this render type'
     end
     if not (self.FILE:write(good) and self.FILE:flush()) then
       return nil, "render write error: cannot write to file"
@@ -300,10 +300,10 @@ function _ex:plot(data_fn, plt_script_fn, pic_fn, terms, attr)
   local data_f = good
 
   for _, ant in ipairs(self._wait) do
-    good, msg = formater.plt(ant)
+    good = formater.plt(ant)
     if not good then
       data_f:close()
-      return nil, msg
+      return nil, 'invalid data for this render type'
     end
     good, msg = data_f:write(good)
     if not good then
@@ -389,11 +389,11 @@ function _mod.new(name, format, file, is_ins, precision, is_banner)
     return nil
   end
   if not tablex.find(_mod.NAME, name) then
-    warn("render initialization error: no such render for ", name)
+    warn("render initialization error: no such render for ", tostring(name))
     return nil
   end
   if not tablex.find(_mod.TYPE, format) then
-    warn("render initialization error: no such render with ", format, " format")
+    warn("render initialization error: no such render with ", tostring(format), " format")
     return nil
   end
   if name == "simple" and format ~= "raw" then

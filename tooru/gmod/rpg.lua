@@ -19,7 +19,10 @@ local function init(game, ini)
     local sgy_label, upvalue_req, sgy_fun_src = ini.strategies[i], ini.strategies[i + 1], ini.strategies[i + 2]
     -- upvalue may need more necessary function such as 'math'
     local good, msg = load(sgy_fun_src, "calc function for strategy "..sgy_label, "t", upvalue_req)
-    if not good then warn('game define error: invalid strtegies, ', msg); return nil end
+    if not good then
+      warn('game define error: invalid strtegies "', tostring(sgy_label), '": ', msg)
+      return nil
+    end
     table.insert(game.strategies, ge.Strategy(sgy_label, upvalue_req, good))
     game.strategies_by_label[sgy_label] = #game.strategies
   end
@@ -91,7 +94,12 @@ function _ex:payoff_for_player(target)
   local tplayer = self.players[target]
 
   for i = 1, #self.historys do
-    tpayoff[i] = tplayer.payoff(self.historys[i])
+    local ok
+    ok, tpayoff[i] = pcall(tplayer.payoff, self.historys[i])
+    if not ok then
+      warn('error when computing player ', tplayer.label, "'s payoff: ", tplayer[i])
+      return nil
+    end
   end
 
   return tpayoff

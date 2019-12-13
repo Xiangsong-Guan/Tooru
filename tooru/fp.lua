@@ -140,14 +140,14 @@ function _mod.read(content, ln)
     end
     return ret
   else
-    warn("content load error: no such loader ", ln)
+    warn("content load error: no such loader ", tostring(ln))
     return nil
   end
 end
 
 function _mod.serializors.nfg_convertor(game)
   if game.attr.game_type ~= "csg" and game.attr.game_type ~= "evo" and game.attr.game_type ~= "rpg" then
-    warn("game type incompatible error: this kind of tool request game type csg/evo/rep, but got ",game.attr.game_type ", abandoned")
+    warn("game type incompatible error: this kind of tool request game type csg/evo/rep, but got ",tostring(game.attr.game_type) ", abandoned")
     return nil
   end
   -- local nfg_file = io.open(game.attr.title .. nfg_ext, 'w')
