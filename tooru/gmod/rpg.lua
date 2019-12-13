@@ -24,23 +24,31 @@ local function init(game, ini)
     game.strategies_by_label[sgy_label] = #game.strategies
   end
 
+  -- NO NEED FOR THIS
   -- sometimes rep game player not follow certain strategy
-  if #ini.strategies == 0 then return game end
-  if #ini.player_strategies ~= #game.players then warn 'game define error: player amount not equ with their strategies amount'; return nil end
-  game.historys[1] = {}
-  for i, p in ipairs(game.players) do
-    p.strategy = game.strategies_by_label[ini.player_strategies[i]]
-    game.historys[1][i] = game.strategies[p.strategy].reg.INIT
-  end
+  -- if #ini.strategies == 0 and #ini.player_strategies == 0 then return game end
+  -- if #ini.player_strategies ~= #game.players then
+  --   warn 'game define error: player amount not equ with their strategies amount'
+  --   return nil
+  -- end
+  -- game.historys[0] = {}
+  -- for i, p in ipairs(game.players) do
+  --   p.strategy = game.strategies_by_label[ini.player_strategies[i]]
+  --   if not p.strategy then
+  --     warn('no strategy "', tostring(ini.player_strategies[i]), '" for player #"', tostring(i), '"')
+  --     return nil
+  --   end
+  --   game.historys[0][i] = game.strategies[p.strategy].reg.INIT
+  -- end
 
   return game
 end
 
 ------------------------------------------------ *** RPG Game instance (2/2) ***
-local _ex = {payoff_for_player = nil, payoff_with_discount = nil}
+local _ex = {evaluate_history = nil; payoff_for_player = nil, payoff_with_discount = nil}
 ------------------------------------------------ *** RPG Game instance (2/2) ***
 
-function _ex:evaluate_history()
+function _ex:evaluate_history(choices)
   if self.attr.stop < 1 then
     -- infinity limit calculation need help from julia
     warn "cannot calculate payoff for infinity continue rpg"
@@ -49,43 +57,41 @@ function _ex:evaluate_history()
 
   local historys = {{}}
   local strategies = self.strategies
-  local players = self.players
 
-  for j, p in ipairs(players) do
+  if #strategies < 1 then
+    warn 'this game is not for strategy research'
+    return false
+  end
+
+  for pi, si in ipairs(choices) do
     -- what does a plyaer choose to perform in first turn must be apart of
     -- the strategy
-    historys[1][j] = strategies[p.strategy].reg.INIT
+    historys[1][pi] = strategies[si].reg.INIT
   end
 
   for i = 2, self.attr.stop do
-    local choice = {}
-    for j, p in ipairs(players) do
-      choice[j] = strategies[p.strategy].func(historys, j)
+    local outcome = {}
+    for pi, si in ipairs(choices) do
+      local ok
+      ok, outcome[pi] = pcall(strategies[si].func, historys, pi)
+      if not ok then
+        warn('error when computing strategy ', strategies[si].label, ': ', outcome[pi])
+        return false
+      end
     end
-    historys[i] = choice
+    historys[i] = outcome
   end
 
   self.historys = historys
   return true
 end
 
-function _ex:payoff_for_player(strategies, target)
-  if self.attr.stop < 1 then
-    -- infinity limit calculation need help from julia
-    warn "cannot calculate payoff for infinity continue rpg"
-    return nil
-  end
-
+function _ex:payoff_for_player(target)
   local tpayoff = {}
-  local tidx = self.players_by_label[target] or target
-  local tplayer = self.players[tidx]
+  local tplayer = self.players[target]
 
-  for i = 1, self.attr.stop do
-    local choice = {}
-    for j = 1, #strategies do
-      choice[j] = strategies[j][i] or strategies[j][0](self.historys)
-    end
-    tpayoff[i] = tplayer.payoff(choice)
+  for i = 1, #self.historys do
+    tpayoff[i] = tplayer.payoff(self.historys[i])
   end
 
   return tpayoff
