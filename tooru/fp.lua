@@ -116,7 +116,7 @@ local function pre_process(game)
     assert(0 < t[3] and t[3] <= #game.action_sets and 0 < t[4] and t[4] <= #game.payoffs and 0 < t[2], 'invalid types define for #'..i)
   end
 
-  if game.strategies then -- 重复博弈富于心计，夏亚算计我
+  if game.stop or game.init_distri or game.trans then
     return read_rep(game)
   end
   assert(game.game_type:lower() == "csg", 'game input error: this game should be "csg" but not ' .. game.game_type)

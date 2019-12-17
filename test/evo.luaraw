@@ -29,7 +29,4 @@ selection_intensity = 1,
 mutations_intensity = 0.0,
 init_distri = {swim=0.425, fire=0.425, shoot=0.15},
 simulation_population = 100,
-
-strategies = {},
-player_strategies = {},
 }
