@@ -28,8 +28,8 @@ local FruitsBasket =
   local function FruitsBasket(ini)
     local pmtx_len, player_num = 1, 0
     for _, t in ipairs(ini.types) do
-      pmtx_len = ((#ini.action_sets[t[3]]) ^ t[2]) * pmtx_len -- !?
-      player_num = player_num + t[2]
+      pmtx_len = ((#ini.action_sets[t.action_set_idx]) ^ t.player_num) * pmtx_len
+      player_num = player_num + t.player_num
     end
     return pmtx_len * player_num, pmtx_len
   end
@@ -112,7 +112,7 @@ local function factory_of_calc_payoff_from_mtx(ini, my_pos, payoff_idx)
     -- 这意味着这是一个全局回报矩阵
     return function(choice)
       -- local action set idx
-      local lancer, saber, caster = choice[1], 1, ini.types[1][2] -- !?
+      local lancer, saber, caster = choice[1], 1, ini.types[1].player_num
       for i = 2, #choice do
         lancer = lancer + ((#ini.action_sets[ini.types[saber][3]]) ^ saber) * (choice[i] - 1)
         caster = caster - 1
@@ -140,7 +140,7 @@ local function factory_of_calc_payoff_from_mtx(ini, my_pos, payoff_idx)
     --   -- 根据单方回报矩阵的计算需要将‘自己’视为第一个参与者，“第一人称”
     --   table.insert(choice, 1, table.remove(choice, my_pos))
     --   -- local action set idx
-    --   local lancer, saber, caster = choice[1], 1, ini.types[1][2] -- !?
+    --   local lancer, saber, caster = choice[1], 1, ini.types[1][2] --!?
     --   for i = 2, #choice do
     --     lancer =
     --       lancer +
@@ -175,7 +175,7 @@ local function init(game, ini)
   -- 初始化全局行为空间
   --[[   local araya, seikai, rasen = 1, 1, {} -- あらや そうれん
   if ini.value_switch ~= 0 then
-    araya = 2 -- !?
+    araya = 2 --!?
   end
   for _, enjyou in ipairs(ini.action_sets[1]) do -- えんじょう ともえ
     table.insert(rasen, enjyou)
@@ -215,22 +215,21 @@ local function init(game, ini)
   -- 初始化参与者类型和所有的参与者
   local pos, pl = 0
   for _, t in ipairs(ini.types) do
-    local type_label, player_num, action_set_idx, payoff_idx = t[1], t[2], t[3], t[4] -- !?
-    local type = ge.Type(type_label, action_sets[action_set_idx], payoff_idx)
+    local type = ge.Type(t.type_label, action_sets[t.action_set_idx], t.payoff_idx)
     table.insert(game.types, type)
-    game.types_by_label[type_label] = #game.types
-    for j = 1, player_num do
+    game.types_by_label[t.type_label] = #game.types
+    for j = 1, t.player_num do
       pos = pos + 1
       -- 这里可能返回一个 HBC Single payoff mtx 标记，这写参与者的回报计算函数将延迟到完全回
       -- 报矩阵计算完成后再行绑定
-      good = factory_of_calc_payoff_from_mtx(ini, pos, payoff_idx)
+      good = factory_of_calc_payoff_from_mtx(ini, pos, t.payoff_idx)
       if not good then warn 'error init payoff'; return nil end
-      if player_num == 1 then
-        pl = type_label
+      if t.player_num == 1 then
+        pl = t.type_label
       else
-        pl = type_label .. "-" .. tostring(j)
+        pl = t.type_label .. "-" .. tostring(j)
       end
-      table.insert(game.players, ge.Player(pl, game.types_by_label[type_label], good))
+      table.insert(game.players, ge.Player(pl, game.types_by_label[t.type_label], good))
       game.players_by_label[pl] = pos
     end
   end

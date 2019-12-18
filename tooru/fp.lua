@@ -70,18 +70,29 @@ local function read_evo(game)
 end
 
 local function read_rep(game)
-  for i = 2, #game.strategies, 3 do -- !?
-    assert(type(game.strategies[i-1]) == 'string' and type(game.strategies[i]) == 'string' and type(game.strategies[i+1]) == 'string', 'invalid strategy define') -- !?
-    local reg_strs = u.split(game.strategies[i])
-    game.strategies[i] = {}
-    for _, s in ipairs(reg_strs) do
-      local k, v = u.keypairs(s)
-      assert((k and v) and k:match("^[%a_]+[%w_]*"), "game input error: invalid upvalue request")
-      game.strategies[i][k] = v
-    end
-    assert(game.strategies[i].INIT, 'game define error: strategy '..game.strategies[i-1]..' is lack of INIT') -- !?
+  -- this is for that format not luaraw
+  if type(game.strategies[1]) ~= 'table' then
+    local stupid_s = {}
+    for i = 2, #game.strategies, 3 do -- !?
+      assert(type(game.strategies[i-1]) == 'string' and type(game.strategies[i]) == 'string' and type(game.strategies[i+1]) == 'string', 'invalid strategy define')
+      local reg_strs = u.split(game.strategies[i])
+      game.strategies[i] = {}
+      for _, s in ipairs(reg_strs) do
+        local k, v = u.keypairs(s)
+        assert((k and v) and k:match("^[%a_]+[%w_]*"), "game input error: invalid upvalue request")
+        game.strategies[i][k] = v
+      end
 
-    game.strategies[i + 1] = src_sgy_prefix .. game.strategies[i + 1] -- !?
+      table.insert(stupid_s, {game.strategies[i-1], game.strategies[i], src_sgy_prefix..game.strategies[i+1]})
+    end
+    game.strategies = stupid_s
+  end
+
+  for i, s in ipairs(game.strategies) do
+    assert(type(s[1]) == 'string' and type(s[2]) == 'table' and type(s[3]) == 'string', 'invalid strategy define')
+    assert(s[2].INIT, 'game define error: strategy '..s[1]..' is lack of INIT')
+    game.strategies[i].sgy_label, game.strategies[i].upvalue_req, game.strategies[i].sgy_fun_src = s[1], s[2], src_sgy_prefix..s[3]
+    game.strategies[i][1], game.strategies[i][2], game.strategies[i][3] = nil, nil, nil
   end
 
   if game.init_distri then
@@ -99,7 +110,9 @@ local function pre_process(game)
   for i, x in ipairs(game.types) do
     game.types[i] = u.split(x)
     assert(#game.types[i] == 4, "game input error: invalid types define") -- !?
-    assert(type(game.types[i][1]) == 'string' and type(game.types[i][2]) == 'number' and type(game.types[i][3]) == 'number' and type(game.types[i][4]) == 'number', 'invalid strategy define') -- !?
+    assert(type(game.types[i][1]) == 'string' and type(game.types[i][2]) == 'number' and type(game.types[i][3]) == 'number' and type(game.types[i][4]) == 'number', 'invalid strategy define')
+    game.types[i].type_label, game.types[i].player_num, game.types[i].action_set_idx, game.types[i].payoff_idx = game.types[i][1], game.types[i][2], game.types[i][3], game.types[i][4]
+    game.types[i][1], game.types[i][2], game.types[i][3], game.types[i][4] = nil, nil, nil, nil
   end
   assert(#game.action_sets > 0, "game input error: invalid actions define")
   for i, s in ipairs(game.action_sets) do
@@ -112,8 +125,8 @@ local function pre_process(game)
       game.payoffs[i] = src_pf_prefix .. p
     end
   end
-  for i, t in ipairs(game.types) do
-    assert(0 < t[3] and t[3] <= #game.action_sets and 0 < t[4] and t[4] <= #game.payoffs and 0 < t[2], 'invalid types define for #'..i)
+  for _, t in ipairs(game.types) do
+    assert(0 < t.action_set_idx and t.action_set_idx <= #game.action_sets and 0 < t.payoff_idx and t.payoff_idx <= #game.payoffs and 0 < t.player_num, 'invalid types define for '..t.type_label)
   end
 
   if game.stop or game.init_distri or game.trans then

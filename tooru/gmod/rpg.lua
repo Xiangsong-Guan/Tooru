@@ -15,16 +15,15 @@ local _mod = {
 ----------------------------------------------------------------- INIT function
 local function init(game, ini)
   -- 策略初始化
-  for i = 1, #ini.strategies, 3 do -- !?
-    local sgy_label, upvalue_req, sgy_fun_src = ini.strategies[i], ini.strategies[i + 1], ini.strategies[i + 2]
+  for _, s in ipairs(ini.strategies) do
     -- upvalue may need more necessary function such as 'math'
-    local good, msg = load(sgy_fun_src, "calc function for strategy "..sgy_label, "t", upvalue_req)
+    local good, msg = load(s.sgy_fun_src, "calc function for strategy "..s.sgy_label, "t", s.upvalue_req)
     if not good then
-      warn('game define error: invalid strtegies "', tostring(sgy_label), '": ', msg)
+      warn('game define error: invalid strtegies "', tostring(s.sgy_label), '": ', msg)
       return nil
     end
-    table.insert(game.strategies, ge.Strategy(sgy_label, upvalue_req, good))
-    game.strategies_by_label[sgy_label] = #game.strategies
+    table.insert(game.strategies, ge.Strategy(s.sgy_label, s.upvalue_req, good))
+    game.strategies_by_label[s.sgy_label] = #game.strategies
   end
 
   -- NO NEED FOR THIS
