@@ -223,7 +223,7 @@ local function init(game, ini)
       -- 这里可能返回一个 HBC Single payoff mtx 标记，这写参与者的回报计算函数将延迟到完全回
       -- 报矩阵计算完成后再行绑定
       good = factory_of_calc_payoff_from_mtx(ini, pos, t.payoff_idx)
-      if not good then warn 'error init payoff'; return nil end
+      if not good then return nil end
       if t.player_num == 1 then
         pl = t.type_label
       else
@@ -245,17 +245,14 @@ local function init(game, ini)
         return nil
       end
       good = transforms(game.payoffs[1], #game.players)
-      if good then
-        game.PAYOFF_MTX = good
-        -- HBC Project: Single mtx payoff care
-        ini.payoffs[0] = good
-        for i, p in ipairs(game.players) do
-          if p.payoff == single_mtx_mark then
-            p.payoff = factory_of_calc_payoff_from_mtx(ini, i, 0)
-          end
+      if not good then return nil end
+      game.PAYOFF_MTX = good
+      -- HBC Project: Single mtx payoff care
+      ini.payoffs[0] = good
+      for i, p in ipairs(game.players) do
+        if p.payoff == single_mtx_mark then
+          p.payoff = factory_of_calc_payoff_from_mtx(ini, i, 0)
         end
-      else
-        return nil
       end
     else
       warn "payoff mtx error: invalid global payoff defination #1"
@@ -335,7 +332,7 @@ function _ex:copy_choice_lidx2label(lidxs)
     if self.types[self.players[pi].type].actions[cli] then
       labels[pi] = self.actions[self.types[self.players[pi].type].actions[cli]].label
     else
-      warn("choices transform error: invalid choice for player idx: ", (pi), " & choice lidx: ", (cli))
+      warn("choices transform error: invalid choice for player idx: ", tostring(pi), " & choice lidx: ", tostring(cli))
       return nil
     end
   end
