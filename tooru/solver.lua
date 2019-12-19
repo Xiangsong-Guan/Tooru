@@ -105,8 +105,6 @@ function _mod.new(name, renders)
     warn("no solver err: ", tostring(name))
     return nil
   end
-  -- For now, render is must.
-  if not renders or #renders < 1 then warn 'no render to write for solver'; return nil end
   -- when only one renders in, we make it in list too.
   if renders.FILE then
     renders = {renders}

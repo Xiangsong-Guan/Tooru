@@ -50,13 +50,7 @@ end
 local _ex = {evaluate_history = nil; payoff_for_player = nil, payoff_with_discount = nil}
 ------------------------------------------------ *** RPG Game instance (2/2) ***
 
-function _ex:evaluate_history(choices)
-  if self.attr.stop < 1 then
-    -- infinity limit calculation need help from julia
-    warn "cannot calculate payoff for infinity continue rpg"
-    return false
-  end
-
+function _ex:evaluate_history(choices, stop)
   local historys = {{}}
   local strategies = self.strategies
 

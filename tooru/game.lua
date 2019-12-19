@@ -5,12 +5,8 @@
 local _mod = {}
 
 function _mod.new(ini)
-  if type(ini) ~= "table" then
-    warn "input error: non-table input for initialize a game"
-    return nil
-  end
   if type(ini.game_type) ~= "string" then
-    warn "input error: invalid game type"
+    warn "input error: invalid game define"
     return nil
   end
   local ok, game_mod = pcall(require, "tooru/gmod/" .. ini.game_type)

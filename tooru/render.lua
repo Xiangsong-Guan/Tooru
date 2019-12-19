@@ -109,16 +109,8 @@ function formater.plt(yuubin)
 end
 
 -------------------------------------------------------- Internal used porcessor
-local function just_check(data)
-  if type(data) ~= 'table' then
-    warn "render data process error: invalid data, need list"
-    return nil
-  end
-  return data
-end
-
 local data_processor = {
-  evo_historys = just_check,
+  evo_historys = function (data) return data end,
   outcome = nil,
   strategy = nil
 }
@@ -133,9 +125,6 @@ local data_processor = {
 -- [iiittteeemmm] = {LABEL, prob.} the prob. of a certain action of
 --                                 a certain player of a certain outcome data
 function data_processor.outcome(data, game)
-  if not just_check(data) then
-    return just_check(data)
-  end
   local ret = {TYPE = "outcome", SOURCE = data.SOURCE}
   local gtypes, gactions = game.types, game.actions
   for i, o in ipairs(data) do
@@ -183,9 +172,6 @@ end
 --  strategy is something outcome-like data type, so this function's return
 --  refer to above function comment. But strategy does not contain muti-players.
 function data_processor.strategy(data, game)
-  if not just_check(data) then
-    return just_check(data)
-  end
   local ret = {TYPE = "strategy", SOURCE = data.SOURCE}
   local gtypes, gplayers, gactions = game.types, game.players, game.actions
   for i, o in ipairs(data) do
@@ -239,9 +225,6 @@ local _ex = {
 -- Write some banner to the file, banana is a banner string, but the string
 -- written to file is with comment prefix.
 function _ex:banner(banana)
-  if type(banana) ~= "string" then
-    return nil, "render write error: banner must be string"
-  end
   if not self.attr.is_banner then
     return self
   end

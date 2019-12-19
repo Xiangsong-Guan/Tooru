@@ -220,11 +220,6 @@ local _ex = {
 -- This function make a compelete evosim process, it is soooooooooooo quick.
 -- Just return when it is stop.
 function _ex:quick_evo(stop, limit, rnd)
-  if rnd.NAME ~= "evo_historys" then
-    warn "evo sim error: incompatable render"
-    return nil
-  end
-
   local when_stop = self.historys:dash_with_pairs(stop, limit)
 
   local banana, map_term2i, map_i2term = plt_format_banner(self.actions, self.attr.simulation_population)
@@ -245,11 +240,6 @@ end
 
 -- This function is not 'that' quick, but it can make rho calculation.
 function _ex:evo(stop, limit, rnd)
-  if rnd.NAME ~= "evo_historys" then
-    warn "evo sim error: incompatable render"
-    return nil
-  end
-
   local banana, map_term2i, map_i2term = plt_format_banner(self.actions, self.attr.simulation_population, true)
   local good, msg = rnd:banner(banana)
   if not good then
