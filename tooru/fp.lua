@@ -182,7 +182,7 @@ function _mod.serializors.nfg_convertor(game)
   table.insert(nfg, nfg_end)
   table.insert(nfg, nfg_begin)
   for _, p in ipairs(game.players) do
-    table.insert(nfg, #(game.types[p.type].actions))
+    table.insert(nfg, #(game.action_sets[game.types[p.type].action_set_idx]))
     table.insert(nfg, " ")
   end
   table.insert(nfg, nfg_end)

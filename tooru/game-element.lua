@@ -15,10 +15,10 @@ function _mod.Player(label, type, payoff)
 end
 
 ------------------------------------------------------------------ TYPE
-function _mod.Type(label, acts, payoff_idx)
+function _mod.Type(label, action_set_idx, payoff_idx)
   return {
     label = label,
-    actions = acts,
+    action_set_idx = action_set_idx,
     payoff_idx = payoff_idx
   }
 end

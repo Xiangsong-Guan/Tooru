@@ -56,7 +56,7 @@ local function others_solve(self, game, ...)
   if type(game.C_GAME_INFO) ~= "userdata" then
     local lan = {}
     for i, p in ipairs(game.players) do
-      lan[i] = #(game.types[p.type].actions)
+      lan[i] = #(game.action_sets[game.types[p.type].action_set_idx])
     end
     game.C_GAME_INFO = LIBS[2].new(#game.players, lan, game.PAYOFF_MTX)
   end

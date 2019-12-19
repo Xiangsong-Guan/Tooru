@@ -114,7 +114,7 @@ local function factory_of_calc_payoff_from_mtx(ini, my_pos, payoff_idx)
       -- local action set idx
       local lancer, saber, caster = choice[1], 1, ini.types[1].player_num
       for i = 2, #choice do
-        lancer = lancer + ((#ini.action_sets[ini.types[saber][3]]) ^ saber) * (choice[i] - 1)
+        lancer = lancer + ((#ini.action_sets[ini.types[saber].action_set_idx]) ^ saber) * (choice[i] - 1)
         caster = caster - 1
         if caster == 0 then
           saber = saber + 1
@@ -211,11 +211,12 @@ local function init(game, ini)
       table.insert(action_sets[idx], game.actions_by_label[l])
     end
   end
+  game.action_sets = action_sets
 
   -- 初始化参与者类型和所有的参与者
   local pos, pl = 0
   for _, t in ipairs(ini.types) do
-    local type = ge.Type(t.type_label, action_sets[t.action_set_idx], t.payoff_idx)
+    local type = ge.Type(t.type_label, t.action_set_idx, t.payoff_idx)
     table.insert(game.types, type)
     game.types_by_label[t.type_label] = #game.types
     for j = 1, t.player_num do
@@ -268,7 +269,7 @@ local function init(game, ini)
     local JFGI, RTFM = {}, {}
     game.PAYOFF_MTX = {}
     for i, p in ipairs(game.players) do
-      JFGI[i] = #game.types[p.type].actions
+      JFGI[i] = #game.action_sets(game.types[p.type].action_set_idx)
       RTFM[i] = 1
     end
     for i = 1, full, #JFGI do
@@ -312,7 +313,7 @@ function _ex:copy_choice_label2lidx(labels)
   local cli = {}
   for pi, label in ipairs(labels) do
     local cgi = self.actions_by_label[label]
-    for li, gi in ipairs(self.types[self.players[pi].type].actions) do
+    for li, gi in ipairs(self.action_sets[self.types[self.players[pi].type].action_set_idx]) do
       if gi == cgi then
         cli[pi] = li
         break
@@ -329,8 +330,8 @@ end
 function _ex:copy_choice_lidx2label(lidxs)
   local labels = {}
   for pi, cli in ipairs(lidxs) do
-    if self.types[self.players[pi].type].actions[cli] then
-      labels[pi] = self.actions[self.types[self.players[pi].type].actions[cli]].label
+    if self.action_sets[self.types[self.players[pi].type].action_set_idx][cli] then
+      labels[pi] = self.actions[self.action_sets[self.types[self.players[pi].type].action_set_idx][cli]].label
     else
       warn("choices transform error: invalid choice for player idx: ", tostring(pi), " & choice lidx: ", tostring(cli))
       return nil
@@ -382,6 +383,7 @@ function _mod.new(ini)
     actions = {},
     types = {},
     actions_by_label = {},
+    action_sets = {},
     types_by_label = {},
     players = {},
     players_by_label = {},

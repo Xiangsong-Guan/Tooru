@@ -126,7 +126,7 @@ local data_processor = {
 --                                 a certain player of a certain outcome data
 function data_processor.outcome(data, game)
   local ret = {TYPE = "outcome", SOURCE = data.SOURCE}
-  local gtypes, gactions = game.types, game.actions
+  local gtypes, gactions, gaction_sets = game.types, game.actions, game.action_sets
   for i, o in ipairs(data) do
     local item = {NAME = o.TAG}
     local progress = 1
@@ -139,7 +139,7 @@ function data_processor.outcome(data, game)
       local iitteemm = item[pi]
       if is_mixed then
         -- this situation is for mixed outcome
-        for _, gai in ipairs(t.actions) do
+        for _, gai in ipairs(gaction_sets[t.action_set_idx]) do
           if o[progress] > 0.0 then
             table.insert(
               iitteemm,
@@ -156,7 +156,7 @@ function data_processor.outcome(data, game)
         table.insert(
           iitteemm,
           {
-            LABEL = gactions[t.actions[o[progress]]].label,
+            LABEL = gactions[gactions[t.action_set_idx][o[progress]]].label,
             prob = 1.0
           }
         ) -- iiittteeemmm
@@ -173,7 +173,7 @@ end
 --  refer to above function comment. But strategy does not contain muti-players.
 function data_processor.strategy(data, game)
   local ret = {TYPE = "strategy", SOURCE = data.SOURCE}
-  local gtypes, gplayers, gactions = game.types, game.players, game.actions
+  local gtypes, gplayers, gactions, gaction_sets = game.types, game.players, game.actions, game.action_sets
   for i, o in ipairs(data) do
     local item = {
       NAME = ("%s's %s, with %f payoff"):format(gplayers[o.TARGET].label, o.TAG, o.BR_PAYOFF)
@@ -182,7 +182,7 @@ function data_processor.strategy(data, game)
     item[1] = {LABEL = gplayers[o.TARGET].label}
     if math.type(o[1]) == "float" then
       -- this situation is for some mixed
-      for lai, gai in ipairs(gtypes[gplayers[o.TARGET].type].actions) do
+      for lai, gai in ipairs(gaction_sets[gtypes[gplayers[o.TARGET].type].action_set_idx]) do
         if o[lai] > 0.0 then
           table.insert(
             item[1],
