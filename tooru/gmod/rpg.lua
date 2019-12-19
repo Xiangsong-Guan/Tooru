@@ -12,6 +12,14 @@ local _mod = {
   TYPE = "rpg"
 }
 
+local function hs_req(self, top_i, char, i)
+  if char == 'choice' then
+    return self[top_i][i]
+  else
+    return self[top_i][char][i]
+  end
+end
+
 ----------------------------------------------------------------- INIT function
 local function init(game, ini)
   -- 策略初始化
@@ -43,12 +51,44 @@ local function init(game, ini)
   --   game.historys[0][i] = game.strategies[p.strategy].reg.INIT
   -- end
 
+  game.historys.req = hs_req
+
   return game
 end
 
 ------------------------------------------------ *** RPG Game instance (2/2) ***
-local _ex = {evaluate_history = nil; payoff_for_player = nil, payoff_with_discount = nil}
+local _ex = {
+  evaluate_history = nil;
+  payoff_with_discount = nil;
+  copy_strategy_choice_label2idx = nil,
+  copy_strategy_choice_idx2label = nil
+}
 ------------------------------------------------ *** RPG Game instance (2/2) ***
+
+function _ex:copy_strategy_choice_label2idx(labels)
+  local csi = {}
+  for pi, label in ipairs(labels) do
+    csi[pi] = self.strategies_by_label[label]
+    if not csi[pi] then
+      warn("strategy choices transform error: invalid choice for player idx: ", tostring(pi), " & choice label: ", label)
+      return nil
+    end
+  end
+  return csi
+end
+
+function _ex:copy_strategy_choice_idx2label(idxs)
+  local labels = {}
+  for pi, si in ipairs(idxs) do
+    if self.strategies[si] then
+      labels[pi] = self.strategies[si].label
+    else
+      warn("strategy choices transform error: invalid choice for player idx: ", tostring(pi), " & choice lidx: ", tostring(si))
+      return nil
+    end
+  end
+  return labels
+end
 
 function _ex:evaluate_history(choices, stop)
   local historys = {{}}
@@ -65,48 +105,63 @@ function _ex:evaluate_history(choices, stop)
     historys[1][pi] = strategies[si].reg.INIT
   end
 
-  for i = 2, self.attr.stop do
+  for i = 2, stop do
     local outcome = {}
     for pi, si in ipairs(choices) do
-      local ok
-      ok, outcome[pi] = pcall(strategies[si].func, historys, pi)
+      local ok, act = pcall(strategies[si].func, historys, pi)
       if not ok then
-        warn('error when computing strategy ', strategies[si].label, ': ', outcome[pi])
+        warn('error when computing strategy ', strategies[si].label, ': ', act)
         return false
       end
+      outcome[pi] = act
+    end
+    if type(outcome[1]) == 'string' then
+      outcome = self:copy_choice_label2lidx(outcome)
+      if not outcome then return nil end
     end
     historys[i] = outcome
   end
 
+  for target, tplayer in ipairs(self.players) do
+    for i = 1, #historys do
+      local ok
+      ok, historys[i].payoff[target] = pcall(tplayer.payoff, self.historys[i])
+      if not ok then
+        warn('error when computing player ', tplayer.label, "'s payoff: ", historys[i].payoff[target])
+        return nil
+      end
+  end end
+
+  historys.req = hs_req
   self.historys = historys
   return true
 end
 
-function _ex:payoff_for_player(target)
-  local tpayoff = {}
-  local tplayer = self.players[target]
+-- function _ex:payoff_for_player(target)
+--   local tpayoff = {}
+--   local tplayer = self.players[target]
 
-  for i = 1, #self.historys do
-    local ok
-    ok, tpayoff[i] = pcall(tplayer.payoff, self.historys[i])
-    if not ok then
-      warn('error when computing player ', tplayer.label, "'s payoff: ", tplayer[i])
-      return nil
-    end
-  end
+--   for i = 1, #self.historys do
+--     local ok
+--     ok, tpayoff[i] = pcall(tplayer.payoff, self.historys[i])
+--     if not ok then
+--       warn('error when computing player ', tplayer.label, "'s payoff: ", tplayer[i])
+--       return nil
+--     end
+--   end
 
-  return tpayoff
-end
+--   return tpayoff
+-- end
 
-function _ex:payoff_with_discount(payoffs)
+function _ex:payoff_with_discount(discount_factor)
   local dp = {}
-  local df = self.attr.discount_factor
-  if not df then
-    warn 'rpg payoff with discount warning: no discount factor defined'
-    return nil
-  end
-  for i, p in ipairs(payoffs) do
-    dp[i] = (df ^ (i - 1)) * p
+  local df = discount_factor or self.attr.discount_factor
+  for i, h in ipairs(self.historys) do
+    local dpi = {}
+    for j, p in ipairs(h.payoff) do
+      dpi[j] = (df ^ (i - 1)) * p
+    end
+    dp[i] = dpi
   end
   return dp
 end
