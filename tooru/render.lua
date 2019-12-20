@@ -235,7 +235,7 @@ function _ex:banner(banana)
       comment_prefix[self.TYPE],
       os.date(),
       comment_prefix[self.TYPE],
-      tostring(self.NAME),
+      self.NAME,
       -- beauty will auto append a '\n'
       u.beauty(banana, comment_prefix[self.TYPE])
     )

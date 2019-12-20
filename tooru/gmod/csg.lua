@@ -208,6 +208,11 @@ local function init(game, ini)
       if not game.actions_by_label[l] then
         if ini.value_switch == 0 then
           v = nil
+        else
+          if type(action) ~= 'number' then
+            warn 'game defined value-ed action, but action cannot be used to compute'
+            return nil
+          end
         end
         table.insert(game.actions, ge.Action(l, v))
         game.actions_by_label[l] = #game.actions
@@ -232,7 +237,7 @@ local function init(game, ini)
       if t.player_num == 1 then
         pl = t.type_label
       else
-        pl = t.type_label .. "-" .. tostring(j)
+        pl = t.type_label .. "-" .. j
       end
       table.insert(game.players, ge.Player(pl, game.types_by_label[t.type_label], good))
       game.players_by_label[pl] = pos

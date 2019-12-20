@@ -30,7 +30,7 @@ local function init(game, ini)
     s.upvalue_req.enviroment = game._enviroment
     local good, msg = load(s.sgy_fun_src, "calc function for strategy "..s.sgy_label, "t", s.upvalue_req)
     if not good then
-      warn('game define error: invalid strtegies "', tostring(s.sgy_label), '": ', msg)
+      warn('game define error: invalid strtegies "', s.sgy_label, '": ', msg)
       return nil
     end
     table.insert(game.strategies, ge.Strategy(s.sgy_label, s.upvalue_req, good))
