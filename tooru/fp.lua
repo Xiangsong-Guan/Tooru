@@ -57,19 +57,23 @@ local function read_evo(game)
     game.init_distri = {}
     for _, s in ipairs(init_distri) do
       local k, v = u.keypairs(s)
-      assert((k and v) and type(v) == "number", "game input error: invalid evo init_distri")
+      -- not fully check, range check need to be done
+      assert(type(k) == 'string' and type(v) == "number", "game input error: invalid evo init_distri")
       game.init_distri[k] = v
     end
   end
 
-  assert(tonumber(game.selection_intensity) > 0, 'invalid selection intensity')
-  assert(tonumber(game.simulation_population) > 1 and math.type(game.simulation_population), 'invalid simulation population')
+  assert(tonumber(game.selection_intensity) and tonumber(game.selection_intensity) > 0, 'invalid selection intensity')
+  assert(tonumber(game.simulation_population) and tonumber(game.simulation_population) > 1, 'invalid simulation population')
 
   assert(game.game_type:lower() == "evo", 'game input error: this game should be "evo" but not ' .. game.game_type)
   return game
 end
 
 local function read_rep(game)
+  -- some rpg based game may not contain strategies
+  if not game.strategies then game.strategies = {} end
+
   -- this is for that format not luaraw
   if type(game.strategies[1]) ~= 'table' then
     local stupid_s = {}
@@ -95,10 +99,7 @@ local function read_rep(game)
     game.strategies[i][1], game.strategies[i][2], game.strategies[i][3] = nil, nil, nil
   end
 
-  if game.init_distri then
-    return read_evo(game)
-  end
-  assert(game.game_type:lower() == "rpg", 'game input error: this game should be "rpg" but not ' .. game.game_type)
+  if game.states then return read_sg(game) elseif game.init_distri then return read_evo(game) else assert(game.game_type:lower() == "rpg", 'game input error: this game should be "rpg" but not '..game.game_type) end
   return game
 end
 
@@ -129,7 +130,7 @@ local function pre_process(game)
     assert(0 < t.action_set_idx and t.action_set_idx <= #game.action_sets and 0 < t.payoff_idx and t.payoff_idx <= #game.payoffs and 0 < t.player_num, 'invalid types define for '..t.type_label)
   end
 
-  if game.stop or game.init_distri or game.trans then
+  if game.strategies or game.init_distri or game.states then
     return read_rep(game)
   end
   assert(game.game_type:lower() == "csg", 'game input error: this game should be "csg" but not ' .. game.game_type)

@@ -162,6 +162,10 @@ local function init(game, ini)
   local init_choice, join_the_party = {}, 0
   -- in evo game, act local index is same as global index
   for sgy, pop in pairs(ini.init_distri) do
+    if not game.actions_by_label[sgy] then
+      warn('invalid init distribution define: no such a action "', sgy, '"')
+      return nil
+    end
     if math.type(pop) == "float" then
       local gayfriend = pop * ini.simulation_population
       local overcook = math.floor(gayfriend)
