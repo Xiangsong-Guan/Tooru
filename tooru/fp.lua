@@ -104,6 +104,16 @@ local function read_rep(game)
 end
 
 local function pre_process(game)
+  if game.enviroment and #game.enviroment > 0 then
+    local env = {}
+    for _, s in ipairs(game.enviroment) do
+      local k, v = u.keypairs(s)
+      assert((k and v) and k:match("^[%a_]+[%w_]*"), "game input error: invalid enviroment request")
+      env[k] = v
+    end
+    game.enviroment = env
+  end
+
   assert(game.value_switch == 0 or game.value_switch == 1, "invalid value switch define")
   assert(game.types and game.action_sets and game.payoffs, "game input error: incompleted game define")
 

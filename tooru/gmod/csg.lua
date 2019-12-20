@@ -125,9 +125,13 @@ local function factory_of_calc_payoff_from_mtx(ini, my_pos, payoff_idx)
     end
   elseif type(payoff) == "string" then
     -- 一个效用函数
-    local good, msg = load(payoff, "payoff calc function code", "t", nil)
+    local upvalue_req
+    upvalue_req.math = math
+    upvalue_req.print = print
+    upvalue_req.enviroment = ini.enviroment
+    local good, msg = load(payoff, "payoff calc function code", "t", upvalue_req)
       if not good then
-        warn("error when loading payoff function for player #", tostring(my_pos), ": ", msg); 
+        warn("error when loading payoff function for player #", tostring(my_pos), ": ", msg);
         return nil
       end
     -- ini.payoffs should be pre-process for pass-in-arg
@@ -294,6 +298,8 @@ local function init(game, ini)
       until done
     end -- end of inner for
   end -- end of if-else
+
+  game._enviroment = ini.enviroment
   return game
 end -- end of init
 
@@ -398,7 +404,8 @@ function _mod.new(ini)
       game_type = ini.game_type,
       type_name = nil
     },
-    C_GAME_INFO = nil
+    C_GAME_INFO = nil,
+    _enviroment = {}
   }
   ---------------------------------------------- *** CSG Game instance (1/2) ***
   xtable.merge(new_game, _ex)

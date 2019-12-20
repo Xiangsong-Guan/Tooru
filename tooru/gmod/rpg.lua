@@ -25,6 +25,9 @@ local function init(game, ini)
   -- 策略初始化
   for _, s in ipairs(ini.strategies) do
     -- upvalue may need more necessary function such as 'math'
+    s.upvalue_req.math = math
+    s.upvalue_req.print = print
+    s.upvalue_req.enviroment = game._enviroment
     local good, msg = load(s.sgy_fun_src, "calc function for strategy "..s.sgy_label, "t", s.upvalue_req)
     if not good then
       warn('game define error: invalid strtegies "', tostring(s.sgy_label), '": ', msg)
